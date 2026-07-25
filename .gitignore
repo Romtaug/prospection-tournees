@@ -1,1 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
 
+# Sorties generees (ne pas versionner)
+sirene_tournees.csv
+base_tournees.csv
+base_tournees_enrichi.csv
+
+# ... sauf la base publiee par le workflow, committee volontairement :
+!data/base_tournees.csv
