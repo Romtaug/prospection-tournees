@@ -1,0 +1,66 @@
+# =====================================================================
+#  Prospection tournees B2B - configuration
+#  Cible : societes dont les equipes se deplacent chaque jour vers une
+#  liste d'adresses (techniciens, inspecteurs, livreurs). Ce sont les
+#  acheteurs potentiels de l'optimiseur de tournees.
+# =====================================================================
+
+naf:
+  reseaux:      ["42.21Z", "42.22Z", "43.21A", "43.21B", "61.10Z", "61.20Z", "61.90Z"]   # construction de reseaux, installateurs electriques, operateurs telecom
+  cvc:          ["43.22A", "43.22B", "43.29A"]                                            # plomberie-chauffage, climatisation, isolation (marche RGE)
+  maintenance:  ["43.29B", "33.12Z", "33.13Z", "33.14Z", "33.20B", "33.20D"]              # ascenseurs, SAV machines, equipements industriels
+  securite:     ["80.10Z", "80.20Z"]                                                      # gardiennage avec rondes mobiles, alarmes-telesurveillance (installateurs et SAV itinerants)
+  controle:     ["71.20B"]                                                                # bureaux de controle (Apave-like), inspection, diagnostiqueurs immobiliers
+  proprete:     ["81.10Z", "81.21Z", "81.22Z", "81.29A", "81.29B", "81.30Z"]              # facility management, nettoyage, nettoyage industriel, 3D (deratisation), autres nettoyages, paysagistes
+  environnement: ["37.00Z", "38.11Z", "38.12Z"]                                           # assainissement-curage, collecte de dechets non dangereux et dangereux (tournees par nature)
+  livraison:    ["53.20Z", "49.41B", "96.01A"]                                            # coursiers, messagerie locale, fret de proximite, blanchisserie de gros (tournees collecte-livraison de linge B2B)
+  depannage:    ["95.11Z", "95.21Z", "95.22Z"]                                            # depannage sur site : informatique, electronique grand public, electromenager
+
+# 49.41A (fret interurbain longue distance) VOLONTAIREMENT ecarte : du point a
+# point, pas des tournees multi-arrets. Ajoute-le a "livraison" si tu y tiens.
+
+# Tranches d'effectif salarie INSEE de l'UNITE LEGALE.
+# Codes : 03 = 6-9, 11 = 10-19, 12 = 20-49, 21 = 50-99, 22 = 100-199,
+#         31 = 200-249, 32 = 250-499.
+# En dessous : trop petits pour un deploiement a 5 000 euros.
+# Au dessus : grands comptes, hors cold email (a travailler en direct).
+effectifs:
+  defaut: ["11", "12", "21", "22", "31", "32"]                 # 10 a 499 salaries
+  par_type:
+    livraison: ["03", "11", "12", "21", "22", "31", "32"]      # 6 a 499 : chez eux, presque tout l'effectif roule
+
+# Zone. Liste vide = France entiere. Exemple AURA : ["69", "38", "01", "42", "73", "74"]
+departements: []
+
+# --- Enrichissement (enrich.py) -------------------------------------------
+# Regle : uniquement des emails GENERIQUES trouves sur le site officiel.
+# Aucun email nominatif (prenom.nom@) n'est devine : donnee personnelle.
+enrichissement:
+  workers: 8
+  timeout_http: 8
+  duckduckgo_fallback: true      # si le domaine devine ne repond pas, chercher le site via DuckDuckGo
+  tlds: ["fr", "com", "org", "net", "eu"]
+  role_prefixes: ["contact", "info", "accueil", "secretariat", "administration", "direction", "commercial", "hello", "bonjour", "rh", "compta", "exploitation", "agence", "sav", "devis"]
+  paths_a_scanner: ["/", "/contact", "/nous-contacter", "/contactez-nous", "/mentions-legales", "/a-propos", "/qui-sommes-nous", "/devis"]
+  domaines_ignores: ["facebook.com", "linkedin.com", "google.", "pagesjaunes", "societe.com", "pappers", "infogreffe", "youtube", "instagram", "twitter", "x.com", "wikipedia", "sentry", "wixpress", "annuaire-", "lannuaire", "tripadvisor", "trustpilot", "indeed", "glassdoor", "leboncoin", "houzz", "travaux.com", "habitatpresto", "allovoisins", "starofservice", "yelp", "mappy", "kompass", "verif.com", "manageo"]
+
+# --- Scoring (0-100, tiers A/B/C) ------------------------------------------
+scoring:
+  poids_email: 20          # email generique trouve sur le site
+  poids_site: 8            # site trouve mais pas d'email
+  poids_telephone: 10
+  poids_finances: 15       # CA dans la fourchette ideale
+  poids_croissance: 5      # CA en hausse vs N-1
+  poids_effectif: 10       # effectif renseigne et >= 3 salaries
+  poids_categorie: 5       # PME / ETI / GE
+  poids_anciennete: 5
+  poids_dirigeant: 5
+  poids_labels: 5
+  poids_multi_etab: 8      # au moins 2 etablissements ouverts : multi-agences = plusieurs deploiements vendables
+  ca_min_ideal: 300000
+  ca_max_ideal: 80000000
+  age_min: 3
+  age_max: 90
+  seuil_tier_A: 60
+  seuil_tier_B: 40
+  penalite_distress: 100   # procedure collective / radiation => tier "exclu"
