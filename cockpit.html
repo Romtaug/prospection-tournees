@@ -540,7 +540,15 @@ function toCSV(cols,data){
 /* ====================== état et sauvegarde ====================== */
 let COLS=[], DATA=[], VIEW=[], CUR=null, FH=null, FNAME="", DIRTY=0, SAVING=false, LAST=null, ERR="", T=null;
 const canFS = typeof window.showOpenFilePicker === "function";
-if(!canFS){ $("open").disabled = true; $("nofs").classList.remove("hide"); }
+const secure = ["localhost","127.0.0.1"].includes(location.hostname) || location.protocol === "https:";
+if(!canFS){
+  $("open").disabled = true; $("nofs").classList.remove("hide");
+} else if(!secure){
+  $("nofs").classList.remove("hide");
+  $("nofs").innerHTML = "<b>Cette page n'est pas servie en localhost.</b> L'écriture directe exige HTTPS ou "
+    + "localhost : lance <b>lancer_cockpit.bat</b> (Windows) ou <b>python lancer_cockpit.py</b> (Mac, Linux) "
+    + "depuis le même dossier. Tu peux tenter quand même, sinon utilise le glisser-déposer.";
+}
 
 async function ensureRW(h){
   if(!h.queryPermission) return true;
@@ -555,7 +563,10 @@ $("open").onclick = async () => {
     if(!await ensureRW(h)){ info("Permission d'écriture refusée. Réessaie et accepte, ou utilise le glisser-déposer.", true); return; }
     const f = await h.getFile();
     if(load(await f.text(), f.name)) FH = h;
-  }catch(e){ if(e.name!=="AbortError") info("Ouverture impossible : "+e.message+". Utilise le glisser-déposer.", true); }
+  }catch(e){ if(e.name!=="AbortError") info("Écriture directe indisponible ("+e.message
+    +"). C'est normal si tu as ouvert ce fichier par double-clic : l'API exige HTTPS ou localhost. "
+    +"Lance lancer_cockpit.py (ou lancer_cockpit.bat sur Windows) pour l'ouvrir correctement, "
+    +"ou utilise le glisser-déposer.", true); }
 };
 function touch(){
   DIRTY++;
