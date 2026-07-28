@@ -75,20 +75,66 @@ departement, telephone, source...) + 45 colonnes d'enrichissement :
 - `config.yml` : cibles NAF, profils d'effectifs, parametres d'enrichissement, scoring.
 - `sirene_api.py` : collecte via l'API publique recherche-entreprises.api.gouv.fr (aucune cle).
 - `enrich.py` : enrichissement complet avec reprise automatique.
+- `export_crm.py` : genere le CRM de prospection (CSV) avec colonnes de suivi.
 - `common.py` : helpers partages.
 - `.github/workflows/refresh.yml` : reconstruction de la base le 1er du mois.
 - `.github/workflows/enrich.yml` : enrichissement chaque nuit a 01:00 UTC, avancement sauvegarde sur la branche `enrichi`.
+- `.github/workflows/crm.yml` : generation du CRM chaque lundi 06:30 UTC (et a la demande).
 
 ## Demarrage
 
 1. Settings > Actions > General > Workflow permissions > "Read and write permissions".
 2. Onglet Actions > "Build base tournees" > Run workflow. La base arrive dans `data/base_tournees.csv` (et en artefact), avec le decompte par type dans le log.
 3. Rien d'autre a faire : "Enrichissement base tournees" tourne chaque nuit et s'arrete tout seul quand tout est traite.
+4. Quand tu veux un fichier de travail : Actions > "CRM prospection" > Run workflow. Il se regenere aussi tout seul chaque lundi.
 
 ## Recuperer les donnees
 
 - Base brute : `data/base_tournees.csv` sur la branche `main`.
 - Base enrichie : artefact `base_tournees_enrichi` du dernier run d'enrichissement, ou `data/base_tournees_enrichi.csv.gz` sur la branche `enrichi`.
+
+## Le CRM (tout en CSV)
+
+`export_crm.py` transforme la base enrichie en fichier de travail commercial,
+dans `crm/`. Aucun Excel : que du CSV, lisible sur GitHub, versionne ligne par
+ligne, ouvrable dans Excel ou LibreOffice sans rien installer.
+
+Ce qu'il fait :
+
+- ajoute 5 colonnes de suivi : `statut`, `date_contact`, `canal`, `date_relance`, `notes` ;
+- remet les colonnes dans un ordre utile (nom, tier, score, suivi, contact,
+  liens, firmographie, identifiants) au lieu de l'ordre technique ;
+- trie par score decroissant, puis par nombre d'agences ouvertes ;
+- **CONSERVE le suivi deja saisi** : le script relit le CRM existant et
+  reapplique statut, dates, canal et notes par SIREN. Tu peux le relancer apres
+  chaque enrichissement sans perdre une seule annotation ;
+- ecrit aussi un fichier par metier (`--par-type`), plus pratique a consulter
+  que le fichier complet.
+
+Valeurs attendues (respecte-les pour que le resume reste juste) :
+
+| Colonne | Valeurs |
+|---|---|
+| statut | a contacter, contacte, relance, interesse, rdv, client, refuse, injoignable |
+| canal | email, telephone, linkedin, courrier, visite |
+| date_contact, date_relance | AAAA-MM-JJ |
+| notes | texte libre |
+
+Utilisation :
+
+    python export_crm.py                                   # tout, dans crm/crm_tournees.csv
+    python export_crm.py --par-type                        # + un fichier par metier
+    python export_crm.py --types controle livraison        # les deux verticaux prioritaires
+    python export_crm.py --tier A --dep 69 38 01 42 73 74  # tier A en Auvergne-Rhone-Alpes
+
+Depuis GitHub : Actions > "CRM prospection" > Run workflow, avec les memes
+filtres en champs de saisie. Le resume (volumes, taux d'email, tiers, pipeline
+par statut) s'affiche dans le log et est sauvegarde dans `crm/resume.txt`.
+
+A savoir : le fichier complet fait une quinzaine de Mo, donc GitHub refusera de
+l'afficher dans le navigateur (limite d'apercu). Les fichiers par metier, eux,
+s'ouvrent directement en ligne. Pour le fichier complet, passe par
+"Download raw file" ou par l'artefact `crm_tournees` du dernier run.
 
 ## Exploitation
 
@@ -96,6 +142,10 @@ Prioriser les campagnes avec les filtres du workflow d'enrichissement ou en
 local, par exemple les deux verticaux prioritaires :
 
     python enrich.py --types controle livraison --limit 5000
+
+Puis generer le CRM correspondant :
+
+    python export_crm.py --types controle livraison --par-type
 
 Le score (0-100) et le tier (A/B/C) classent les lignes pour l'emailing :
 tier A = email verifie + finances saines + taille ideale. Les multi-agences
