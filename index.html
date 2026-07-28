@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cockpit tournees - Closer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,700;10..48,800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#EEF2F6; --ink2:#FFFFFF; --ink3:#F5F8FA;
+    --acc:#1D5CD6; --acc2:#17489F; --sec:#0F8B8D; --light:#16222E;
+    --muted:#5B6B7B; --line:#E3E9EF; --ok:#12703F; --bad:#B23A2C;
+    --disp:"Bricolage Grotesque",sans-serif; --body:"Inter",sans-serif; --mono:"Space Mono",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--light);font-family:var(--body);line-height:1.5;padding:14px;
+    background-image:radial-gradient(900px 500px at 88% -10%,rgba(29,92,214,.10),transparent),
+                     radial-gradient(700px 500px at 0% 110%,rgba(15,139,141,.08),transparent);}
+  .wrap{max-width:1560px;margin:0 auto}
+  h1,h2,h3{font-family:var(--disp);line-height:1.15}
+  h1{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:1.08rem;font-weight:700;margin-bottom:8px}
+  h3{font-size:.86rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+  a{color:var(--acc)}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand .sub{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:.4px}
+  .tabs{display:flex;gap:5px;flex-wrap:wrap}
+  .tab{font-size:.8rem;font-weight:600;padding:8px 13px;border-radius:999px;
+    border:1px solid var(--line);background:var(--ink2);color:var(--muted);cursor:pointer}
+  .tab:hover{border-color:var(--acc);color:var(--acc)}
+  .tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .tab:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .card{background:var(--ink2);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 1px 3px rgba(16,24,40,.06);padding:15px;margin-bottom:13px}
+  .btn{font-size:.81rem;font-weight:600;padding:9px 13px;border-radius:10px;border:1px solid var(--line);
+    background:var(--ink2);color:var(--light);cursor:pointer;text-decoration:none;display:inline-block}
+  .btn:hover{border-color:var(--acc);color:var(--acc)}
+  .btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  .btn.primary:hover{background:var(--acc2);color:#fff}
+  .btn.sec{background:var(--sec);border-color:var(--sec);color:#fff}
+  .btn.sec:hover{opacity:.92;color:#fff}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.sm{padding:6px 10px;font-size:.75rem}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,select,textarea{font-family:var(--body);font-size:.84rem;padding:8px 10px;border-radius:10px;
+    border:1px solid var(--line);background:var(--ink3);color:var(--light);width:100%}
+  select.mini{padding:4px 6px;font-size:.75rem;border-radius:7px}
+  textarea{resize:vertical;min-height:62px}
+  label.f{display:block;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px}
+  .drop{border:2px dashed var(--line);border-radius:16px;padding:22px;text-align:center;background:var(--ink3);cursor:pointer}
+  .drop.hot{border-color:var(--acc);background:#EAF1FD}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .badge{font-family:var(--mono);font-size:.67rem;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.3px}
+  .b-a{background:#E4F6EC;color:#12703F;border:1px solid #BFE6CF}
+  .b-b{background:#FCF3DC;color:#8A6A0A;border:1px solid #EEDFAF}
+  .b-c{background:#EFF2F5;color:#5B6B7B;border:1px solid #DDE4EA}
+  .b-x{background:#FDECEA;color:#B23A2C;border:1px solid #F4C9C2}
+  .b-m{background:#E8F0FE;color:#17489F;border:1px solid #C6D8F8}
+  .b-t{background:#E6F5F5;color:#0B6A6C;border:1px solid #BFE3E3}
+  .grid{display:grid;gap:13px}
+  .g2{grid-template-columns:minmax(320px,430px) 1fr}
+  .g22{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:1020px){.g2,.g22,.g3,.g4{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:.81rem}
+  th{text-align:left;font-family:var(--mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;
+    position:sticky;top:0;background:var(--ink2);z-index:2}
+  td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr.sel{background:#EAF1FD}
+  tbody tr.click td:first-child{cursor:pointer}
+  tbody tr.click:hover{background:var(--ink3)}
+  .list{max-height:64vh;overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--ink2)}
+  .kv{display:grid;grid-template-columns:125px 1fr;gap:3px 10px;font-size:.82rem}
+  .kv dt{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+  .kv dd{font-weight:500;word-break:break-word}
+  .num{font-family:var(--mono);font-weight:700}
+  .big{font-family:var(--disp);font-size:1.6rem;font-weight:800;letter-spacing:-.02em;color:var(--acc)}
+  .big.g{color:var(--ok)} .big.r{color:var(--bad)}
+  .kpi{background:var(--ink3);border:1px solid var(--line);border-radius:14px;padding:11px}
+  .kpi .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  .fmap{width:100%;height:190px;border:0;border-radius:12px;margin-top:8px}
+  .sld{margin-bottom:11px}
+  .sld label{display:flex;justify-content:space-between;font-size:.77rem;font-weight:600;margin-bottom:3px}
+  .sld b{font-family:var(--mono);color:var(--acc)}
+  input[type=range]{padding:0;accent-color:var(--acc);background:transparent;border:0}
+  .note{font-size:.75rem;color:var(--muted);margin-top:7px}
+  .warnb{background:#FBF1D8;border:1px solid #EBDCA6;color:#7A5F06;border-radius:12px;padding:10px 12px;font-size:.79rem}
+  .okb{background:#E4F6EC;border:1px solid #BFE6CF;color:#12703F;border-radius:12px;padding:10px 12px;font-size:.79rem}
+  .redb{background:#FDECEA;border:1px solid #F4C9C2;color:#96271A;border-radius:12px;padding:10px 12px;font-size:.79rem}
+  .bar{position:sticky;bottom:0;z-index:20;background:var(--ink2);border:1px solid var(--line);
+    border-radius:14px;padding:9px 13px;display:flex;gap:10px;align-items:center;justify-content:space-between;
+    box-shadow:0 -2px 10px rgba(16,24,40,.07);margin-top:11px;flex-wrap:wrap}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .dot.on{background:var(--ok)} .dot.off{background:#C9CFD6} .dot.bz{background:#D99A0B}
+  .sline{font-size:.82rem;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .sline .lab{display:inline-block;min-width:148px;font-family:var(--mono);font-size:.68rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.04em;color:var(--acc);vertical-align:top}
+  .obj{font-size:.82rem;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .obj .q{font-weight:700} .obj .a{color:var(--muted)}
+  details.panel{background:var(--ink2);border:1px solid var(--line);border-radius:16px;margin-bottom:11px;overflow:hidden}
+  details.panel>summary{cursor:pointer;padding:12px 15px;font-family:var(--disp);font-weight:700;font-size:.96rem;list-style:none}
+  details.panel>summary::-webkit-details-marker{display:none}
+  details.panel>summary::after{content:" ›";color:var(--acc)}
+  details.panel[open]>summary::after{content:" ⌄"}
+  details.panel .body{padding:0 15px 15px}
+  .hide{display:none!important}
+  .funnel{display:grid;gap:5px;margin:10px 0}
+  .fb{background:var(--acc);color:#fff;border-radius:8px;padding:6px 10px;font-size:.77rem;font-weight:600;
+    display:flex;justify-content:space-between;min-width:148px}
+  .muted{color:var(--muted)}
+  ul.tight{margin:5px 0 0 17px;font-size:.82rem} ul.tight li{margin-bottom:4px}
+  .prog{height:7px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:5px}
+  .prog i{display:block;height:100%;background:var(--acc)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand"><h1>Cockpit tournées</h1><span class="sub">OPTIMISEUR · BRIEF CLOSER</span></div>
+    <div class="tabs">
+      <button class="tab on" data-pg="pgP">Prospects</button>
+      <button class="tab" data-pg="pgK">Tableau de bord</button>
+      <button class="tab" data-pg="pgR">ROI client</button>
+      <button class="tab" data-pg="pgS">Script</button>
+      <button class="tab" data-pg="pgB">Business plan</button>
+      <button class="tab" data-pg="pgF">Mes revenus</button>
+    </div>
+  </div>
+
+  <!-- ================= PROSPECTS ================= -->
+  <div id="pgP">
+    <div class="card" id="loader">
+      <h2>Ouvre ton fichier CRM</h2>
+      <div class="grid g22" style="margin-top:10px">
+        <div>
+          <button class="btn primary" id="open" style="width:100%;padding:14px">Ouvrir crm_tournees.csv en écriture directe</button>
+          <p class="note"><b>Le mode recommandé.</b> Le fichier reste sur ton disque et chaque modification y est
+          écrite immédiatement, sans téléchargement. Chrome et Edge uniquement.</p>
+          <div id="nofs" class="warnb hide" style="margin-top:8px">Ton navigateur ne permet pas l'écriture directe.
+          Utilise Chrome ou Edge, ou passe par le glisser-déposer à droite (mode téléchargement).</div>
+        </div>
+        <div>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Charger le fichier CRM">
+            <b style="font-size:.9rem">Mode lecture seule</b>
+            <p class="note">Glisse le CSV ici, ou clique. Tes modifications devront être téléchargées puis
+            remises dans le repo à la main.</p>
+            <input type="file" id="file" accept=".csv,text/csv" class="hide">
+          </div>
+        </div>
+      </div>
+      <div class="note" id="loadinfo"></div>
+    </div>
+
+    <div id="work" class="hide">
+      <div class="card">
+        <div class="grid g4">
+          <div><label class="f" for="q">Recherche</label><input id="q" placeholder="nom, ville, dirigeant..."></div>
+          <div><label class="f" for="fType">Métier</label><select id="fType"></select></div>
+          <div><label class="f" for="fTier">Tier</label><select id="fTier"><option value="">Tous</option><option>A</option><option>B</option><option>C</option></select></div>
+          <div><label class="f" for="fStat">Statut</label><select id="fStat"></select></div>
+        </div>
+        <div class="row" style="margin-top:9px">
+          <label class="row" style="width:auto;font-size:.79rem;font-weight:600;gap:5px"><input type="checkbox" id="cEmail" style="width:auto"> Avec email</label>
+          <label class="row" style="width:auto;font-size:.79rem;font-weight:600;gap:5px"><input type="checkbox" id="cMulti" style="width:auto"> Multi-agences</label>
+          <label class="row" style="width:auto;font-size:.79rem;font-weight:600;gap:5px"><input type="checkbox" id="cTodo" style="width:auto"> Jamais contactés</label>
+          <label class="row" style="width:auto;font-size:.79rem;font-weight:600;gap:5px"><input type="checkbox" id="cRel" style="width:auto"> Relances dues</label>
+          <span class="muted" style="font-size:.79rem" id="count"></span>
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div><div class="list"><table>
+          <thead><tr><th>Entreprise</th><th>Tier</th><th>Score</th><th style="min-width:130px">Statut</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table></div>
+        <div class="note">Change le statut directement dans la liste : c'est écrit dans le fichier aussitôt.</div></div>
+        <div id="fiche"><div class="card"><h2>Sélectionne un prospect</h2>
+          <p class="muted" style="font-size:.84rem">Clique sur un nom dans la liste pour voir sa fiche, ses liens et son suivi.</p></div></div>
+      </div>
+
+      <div class="bar">
+        <span style="font-size:.81rem" id="state"></span>
+        <div class="row">
+          <button class="btn sm" id="reload">Recharger depuis le fichier</button>
+          <button class="btn sm" id="close">Fermer</button>
+          <button class="btn primary sm" id="dl">Télécharger une copie</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TABLEAU DE BORD ================= -->
+  <div id="pgK" class="hide">
+    <div id="kEmpty" class="card"><h2>Charge d'abord ton fichier</h2>
+      <p class="muted" style="font-size:.84rem">Le tableau de bord se calcule en direct sur les données ouvertes.</p></div>
+    <div id="kBody" class="hide">
+      <div class="card"><h2>Le fichier</h2>
+        <div class="grid g4" style="margin-top:9px">
+          <div class="kpi"><div class="lbl">Prospects</div><div class="big" id="kTot">-</div></div>
+          <div class="kpi"><div class="lbl">Tier A</div><div class="big" id="kA">-</div></div>
+          <div class="kpi"><div class="lbl">Avec email</div><div class="big" id="kMail">-</div></div>
+          <div class="kpi"><div class="lbl">Multi-agences</div><div class="big" id="kMul">-</div></div>
+        </div>
+      </div>
+      <div class="grid g22">
+        <div class="card"><h2>Le pipeline</h2><table id="kPipe"></table>
+          <div class="note">Avancement du fichier : <span id="kPct"></span></div>
+          <div class="prog"><i id="kBar" style="width:0%"></i></div>
+        </div>
+        <div>
+          <div class="card"><h2>L'argent</h2>
+            <div class="grid g22" style="margin-top:9px">
+              <div class="kpi"><div class="lbl">Vendu</div><div class="big" id="kVen">-</div></div>
+              <div class="kpi"><div class="lbl">Encaissé</div><div class="big g" id="kEnc">-</div></div>
+              <div class="kpi"><div class="lbl">Reste à encaisser</div><div class="big r" id="kDu">-</div></div>
+              <div class="kpi"><div class="lbl">Commission closer</div><div class="big" id="kCom">-</div></div>
+            </div>
+            <table style="margin-top:11px"><tbody>
+              <tr><td>Clients signés</td><td class="num" id="kCli">-</td></tr>
+              <tr><td>Taux de conversion (clients / contactés)</td><td class="num" id="kConv">-</td></tr>
+              <tr><td>Panier moyen encaissé</td><td class="num" id="kPan">-</td></tr>
+              <tr><td>Net estimé pour Romain</td><td class="num" id="kNet">-</td></tr>
+            </tbody></table>
+            <div class="note">Net = encaissé moins environ 21 % de cotisations moins la commission closer.</div>
+          </div>
+          <div class="card"><h2>Livraison</h2><table id="kLiv"></table></div>
+        </div>
+      </div>
+      <div class="card"><h2>Par métier</h2><table id="kMet"></table></div>
+      <div class="card"><h2>Relances à faire</h2><table id="kRel"></table></div>
+    </div>
+  </div>
+
+  <!-- ================= ROI ================= -->
+  <div id="pgR" class="hide">
+    <div class="card"><h2>Calculateur de ROI - à faire pendant l'appel</h2>
+      <p class="muted" style="font-size:.84rem">Demande-lui ses chiffres, saisis-les devant lui. C'est ça qui justifie les 1 900 euros, pas l'argumentaire.</p></div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="sld"><label>Véhicules / techniciens <b id="vV">10</b></label><input type="range" id="rV" min="2" max="120" step="1" value="10"></div>
+        <div class="sld"><label>Km par jour et par véhicule <b id="vK">120</b></label><input type="range" id="rK" min="30" max="400" step="10" value="120"></div>
+        <div class="sld"><label>Coût du km (carburant, usure) <b id="vC">0,45 €</b></label><input type="range" id="rC" min="0.15" max="0.90" step="0.05" value="0.45"></div>
+        <div class="sld"><label>Jours travaillés par an <b id="vJ">220</b></label><input type="range" id="rJ" min="150" max="300" step="5" value="220"></div>
+        <div class="sld"><label>Gain kilométrique estimé <b id="vG">12 %</b></label><input type="range" id="rG" min="4" max="25" step="1" value="12"></div>
+        <div class="sld"><label>Temps de planification par jour <b id="vT">45 min</b></label><input type="range" id="rT" min="0" max="240" step="5" value="45"></div>
+        <div class="sld"><label>Coût horaire du planificateur <b id="vH">32 €</b></label><input type="range" id="rH" min="15" max="80" step="1" value="32"></div>
+        <div class="warnb">Reste conservateur. AntsRoute annonce jusqu'à 20 %, on promet 10 à 15 % : mieux vaut dépasser l'attente que la rater.</div>
+      </div>
+      <div>
+        <div class="card"><h3>Ce qu'il économise chaque année</h3>
+          <div class="grid g22" style="margin-top:9px">
+            <div class="kpi"><div class="lbl">Kilomètres évités</div><div class="big" id="oKm">-</div></div>
+            <div class="kpi"><div class="lbl">Carburant et usure</div><div class="big" id="oEur">-</div></div>
+            <div class="kpi"><div class="lbl">Temps de planification</div><div class="big" id="oH">-</div></div>
+            <div class="kpi"><div class="lbl">CO2 évité</div><div class="big" id="oCo2">-</div></div>
+          </div>
+          <div class="kpi" style="margin-top:11px;background:#EAF1FD;border-color:#C6D8F8">
+            <div class="lbl">Économie totale annuelle</div><div class="big" id="oTot">-</div>
+            <div class="note" id="oRoi"></div></div>
+        </div>
+        <div class="card"><h3>Comparé à un abonnement, pour la même équipe</h3>
+          <table style="margin-top:7px"><tbody>
+            <tr><td>Praxedo Business (69 €/utilisateur/mois)</td><td class="num" id="cPra">-</td><td class="muted">par an, tous les ans</td></tr>
+            <tr><td>AntsRoute Pro (68 €/utilisateur/mois)</td><td class="num" id="cAnt">-</td><td class="muted">par an, tous les ans</td></tr>
+            <tr><td>Développement sur mesure</td><td class="num">8 000 € et +</td><td class="muted">une fois, + maintenance</td></tr>
+            <tr><td><b>Notre déploiement</b></td><td class="num" style="color:var(--acc)">1 900 €</td><td class="muted">une fois, usage illimité</td></tr>
+          </tbody></table>
+          <div class="okb" style="margin-top:9px" id="cGain"></div>
+          <div class="note">Tarifs publics relevés en juillet 2026. Chez Praxedo, l'optimisation automatique des tournées n'existe que dans l'offre haute.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SCRIPT ================= -->
+  <div id="pgS" class="hide">
+    <div class="card"><div class="grid g22">
+      <div><label class="f" for="sMet">Le métier du prospect</label><select id="sMet"></select></div>
+      <div><label class="f">Sa douleur, en une phrase</label><div id="sDoul" style="font-size:.86rem;font-weight:600"></div></div>
+    </div></div>
+    <details class="panel" open><summary>Script d'appel</summary><div class="body">
+      <div class="sline"><span class="lab">Ouverture</span><span id="scOuv"></span></div>
+      <div class="sline"><span class="lab">À éviter</span>Jamais "je vous dérange" ni "c'est le bon moment ?". Donne la raison de l'appel dès la deuxième phrase.</div>
+      <div class="sline"><span class="lab">Découverte</span><span id="scDec"></span></div>
+      <div class="sline"><span class="lab">Valeur</span>"On ne vous vend pas un logiciel avec un abonnement. On déploie un outil à vos couleurs, vous l'utilisez autant que vous voulez, vous payez une fois."</div>
+      <div class="sline"><span class="lab">Le ROI en direct</span>"Donnez-moi deux chiffres : combien de véhicules, et combien de km par jour environ." Puis onglet ROI client, tu calcules devant lui.</div>
+      <div class="sline"><span class="lab">Petit oui</span>"Si on vous enlève 12 % de kilomètres et une heure de planning par jour, ça vaut le coup de regarder ?"</div>
+      <div class="sline"><span class="lab">L'offre POC</span>"Je vous le déploie à vos couleurs avec vos vraies adresses, gratuitement. Vous testez une semaine. Si ça ne vous sert pas, on arrête et vous ne payez rien."</div>
+      <div class="sline"><span class="lab">Étape suivante</span>"Envoyez-moi un export de vos interventions, même brut. Je vous rappelle jeudi 14 h avec l'appli en ligne."</div>
+    </div></details>
+    <details class="panel"><summary>Objections</summary><div class="body">
+      <div class="note" style="margin-bottom:5px">Méthode : valider, reformuler, recadrer avec un chiffre, redemander.</div>
+      <div class="obj"><span class="q">"On a déjà un logiciel"</span> <span class="a">- "Lequel ? Et l'optimisation automatique est incluse dans votre offre ? Chez Praxedo elle n'est que dans le palier à 69 € par utilisateur. Si vous la payez déjà, je ne vous fais pas perdre de temps."</span></div>
+      <div class="obj"><span class="q">"C'est trop cher"</span> <span class="a">- "Une fois 1 900 €, sans abonnement. Le même besoin chez un éditeur, c'est environ 68 € par utilisateur et par mois : pour 10 personnes, plus de 8 000 € par an, tous les ans. Vous êtes remboursé en moins de trois mois."</span></div>
+      <div class="obj"><span class="q">"Pourquoi si peu cher, où est le piège ?"</span> <span class="a">- "Parce qu'on ne vend pas une plateforme complète. Pas d'application mobile, pas de suivi GPS. On fait une seule chose : la planification, et on la fait bien."</span></div>
+      <div class="obj"><span class="q">"On le fait très bien à la main"</span> <span class="a">- "Je vous crois, et c'est souvent vrai sur 10 arrêts. Combien de temps par jour ? À 45 minutes, ça fait environ 165 heures par an de Tetris. Le calcul, on le fait ensemble."</span></div>
+      <div class="obj"><span class="q">"Nos clients imposent des créneaux horaires"</span> <span class="a">- "Soyons clairs : la version actuelle gère la journée de travail et le nombre d'arrêts, pas les créneaux par client. On peut l'ajouter, c'est du développement facturé à la journée. Commençons par le POC sur vos tournées sans créneau."</span></div>
+      <div class="obj"><span class="q">"Et nos données ?"</span> <span class="a">- "L'application est déployée sur votre propre compte, en accès privé, avec la liste des personnes que vous autorisez. Vos adresses restent chez vous, nous n'hébergeons rien."</span></div>
+      <div class="obj"><span class="q">"Envoyez une doc"</span> <span class="a">- "Je fais mieux : je vous le déploie avec vos données, c'est plus parlant qu'un PDF. Il me faut juste un fichier d'interventions. Vous l'avez sous la main ?"</span></div>
+      <div class="obj"><span class="q">"Je dois en parler en interne"</span> <span class="a">- "Normal. Qui décide avec vous ? Je vous prépare l'appli et le calcul d'économies pour que vous arriviez avec des chiffres. On se rappelle mardi ?"</span></div>
+    </div></details>
+    <details class="panel"><summary>La démarche, de A à Z</summary><div class="body"><ul class="tight">
+      <li>Onglet Prospects : filtre <b>tier A</b>, commence par les multi-agences (plus de véhicules, plus de douleur).</li>
+      <li>Ouvre la fiche, vérifie sur Google et Maps que la boîte a bien des équipes qui roulent.</li>
+      <li>Appelle, ou envoie le mail pré-rempli.</li>
+      <li>Dès qu'il donne deux chiffres, passe sur le ROI et calcule devant lui.</li>
+      <li>Objectif de l'appel : <b>obtenir un fichier d'interventions</b>. Pas de vente au téléphone.</li>
+      <li>Tu transmets le fichier à Romain, qui déploie le POC à leurs couleurs sous 48 h.</li>
+      <li>Tu rappelles avec le lien de l'appli en ligne. C'est là que la vente se fait.</li>
+      <li>Tu mets le statut à jour dans la liste, et le montant dans la fiche quand c'est signé.</li>
+    </ul>
+    <div class="warnb" style="margin-top:9px">Le POC est notre arme : personne d'autre ne déploie une appli à la marque du prospect avant signature. Sers-t'en tôt.</div>
+    </div></details>
+  </div>
+
+  <!-- ================= BUSINESS PLAN ================= -->
+  <div id="pgB" class="hide">
+    <div class="card"><h2>Le brief complet - à lire une fois, en entier</h2>
+      <p class="muted" style="font-size:.84rem">Tout ce qu'il faut pour vendre ce produit sans jamais rien inventer.</p></div>
+
+    <details class="panel" open><summary>1. Ce qu'on vend, en une phrase</summary><div class="body">
+      <p style="font-size:.88rem">Une application web qui prend le fichier des interventions d'une entreprise et sort les tournées optimales de ses équipes : carte, feuilles de route Google Maps et Waze, export Excel avec les kilomètres, les coûts et le CO2 économisés. Déployée aux couleurs du client, sur son propre compte, en accès privé.</p>
+      <div class="grid g22" style="margin-top:11px">
+        <div><h3>Ce que ça fait</h3><ul class="tight">
+          <li>Optimisation multi-dépôts</li><li>Distances et durées <b>routières réelles</b></li>
+          <li>Respect de la journée de travail (début, fin, pause)</li><li>Plafond du nombre d'arrêts par tournée</li>
+          <li>Tournée ouverte possible (sans retour au dépôt)</li><li>Feuilles de route Maps et Waze</li>
+          <li>Export Excel 4 onglets avec économies et CO2</li></ul></div>
+        <div><h3>Ce que ça ne fait pas - à dire, jamais à cacher</h3><ul class="tight">
+          <li>Pas d'application mobile pour les techniciens</li><li>Pas de suivi GPS temps réel</li>
+          <li>Pas de preuve d'intervention (photo, signature)</li><li>Pas de SMS au client final</li>
+          <li>Pas de créneaux horaires imposés par site</li><li>Pas d'affectation par compétence, ni poids ou volume</li>
+          <li>Pas d'intégration ERP ou CRM</li></ul></div>
+      </div>
+      <div class="redb" style="margin-top:11px">Si tu promets une de ces fonctions pour signer, on perd le client au premier jour d'usage et on rembourse. Une vente honnête vaut mieux que deux annulées.</div>
+    </div></details>
+
+    <details class="panel"><summary>2. La grille de prix et ta commission</summary><div class="body">
+      <table><thead><tr><th>Ligne</th><th>Prix</th><th>Ta commission</th><th>Ce que ça couvre</th></tr></thead><tbody>
+        <tr><td>POC</td><td class="num" style="color:var(--sec)">offert</td><td class="num">-</td><td>Une semaine, leurs vraies données, appli à leurs couleurs</td></tr>
+        <tr><td><b>Déploiement</b></td><td class="num" style="color:var(--acc)">1 900 €</td><td class="num" style="color:var(--sec)">760 € (40 %)</td><td>Appli à leurs couleurs, leur format de fichier, prise en main 1 h, 30 jours de corrections. <b>Usage illimité dans l'entreprise</b></td></tr>
+        <tr><td>Modification, nouvelle fonction</td><td class="num">450 € / jour</td><td class="num">0 €</td><td>Créneaux horaires, contrainte métier, connecteur. C'est du développement, pas de la vente</td></tr>
+        <tr><td>Abonnement annuel</td><td class="num">0 €</td><td class="num">-</td><td>Il n'y en a pas. C'est notre argument principal</td></tr>
+      </tbody></table>
+      <div class="okb" style="margin-top:9px"><b>40 % sur chaque déploiement, payés sur l'encaissé.</b> Pas de licence par utilisateur, pas d'abonnement, usage illimité : c'est l'inverse exact du modèle des éditeurs. Répète-le à chaque appel.</div>
+      <div class="warnb" style="margin-top:7px">Jamais de remise sous 1 900 €. En dessous, le temps de déploiement et ta commission ne sont plus couverts. Si le prix bloque vraiment, on réduit le périmètre, pas le prix.</div>
+    </div></details>
+
+    <details class="panel"><summary>3. Qui on cible, et pourquoi</summary><div class="body">
+      <p class="note" style="margin-bottom:7px">Base construite depuis SIRENE : entreprises actives de 10 à 499 salariés (6 et plus pour la livraison), 34 codes d'activité, France entière. Volumes réels :</p>
+      <table><thead><tr><th>Métier</th><th>Entreprises</th><th>Pourquoi elles souffrent</th></tr></thead><tbody id="bTargets"></tbody></table>
+      <div class="okb" style="margin-top:9px">On commence par <b>contrôle</b> et <b>livraison</b>. Contrôle est une niche de 724 boîtes entièrement adressable. Livraison a la douleur la plus forte : la tournée <i>est</i> leur métier.</div>
+      <div class="warnb" style="margin-top:7px"><b>Le multi-agences est un signal, pas un prix.</b> Plusieurs établissements ouverts veut dire plus de véhicules et des sites plus dispersés, donc un ROI plus élevé et une vente plus facile. Le prix ne change pas : c'est 1 900 € pour toute l'entreprise.</div>
+    </div></details>
+
+    <details class="panel"><summary>4. Le marché : ce que paient nos prospects aujourd'hui</summary><div class="body">
+      <table><thead><tr><th>Solution</th><th>Tarif public</th><th>Ce qu'ils ont en plus de nous</th></tr></thead><tbody>
+        <tr><td>Praxedo (FR, leader)</td><td class="num">24,50 / 49 / 69 € par utilisateur/mois</td><td>App mobile, GPS, paramétrage métier. Optimisation seulement dans l'offre à 69 €</td></tr>
+        <tr><td>AntsRoute (FR)</td><td class="num">24 / 48 / 68 / 88 € par utilisateur/mois</td><td>App mobile, GPS temps réel, preuve de livraison, SMS clients</td></tr>
+        <tr><td>Mapo (FR)</td><td class="num">30 € HT/mois/véhicule (45 avec mobile)</td><td>App mobile</td></tr>
+        <tr><td>OptimoRoute (US)</td><td class="num">35 à 49 $/chauffeur/mois</td><td>App mobile, suivi client. Pas de facturation ni de CRM</td></tr>
+        <tr><td>Moyenne du secteur</td><td class="num">53,92 €/mois</td><td>sur 585 logiciels analysés</td></tr>
+        <tr><td>Développement sur mesure</td><td class="num">dès 8 000 €</td><td>Fait exactement ce qu'ils veulent. TJM développeur : 350 à 600 €/jour</td></tr>
+      </tbody></table>
+      <div class="note">Relevé en juillet 2026. Si un prospect cite un autre prix, note-le et dis-le nous : on corrige le brief.</div>
+    </div></details>
+
+    <details class="panel"><summary>5. Où on gagne, où on perd</summary><div class="body"><div class="grid g22">
+      <div><h3>On gagne quand</h3><ul class="tight">
+        <li>5 à 50 personnes roulent, et la planification se fait dans Excel ou de tête</li>
+        <li>Elle refuse un abonnement de plus, ou a été échaudée par un éditeur</li>
+        <li>Elle a plusieurs agences : notre prix ne bouge pas, celui d'un éditeur double</li>
+        <li>Le décideur est un responsable d'exploitation, pas un service achats</li>
+        <li>Les tournées n'ont pas de créneau horaire client imposé</li></ul></div>
+      <div><h3>On perd quand</h3><ul class="tight">
+        <li>Elle veut une plateforme complète avec app mobile et GPS</li>
+        <li>Les créneaux horaires clients sont au cœur du métier</li>
+        <li>Plus de 500 salariés : appel d'offres, sécurité, SLA, pas notre terrain</li>
+        <li>Elle a déjà Praxedo ou AntsRoute avec l'optimisation activée</li>
+        <li>Ses tournées sont figées et identiques chaque semaine : le gain est faible, autant le dire</li></ul></div>
+    </div><div class="warnb" style="margin-top:9px">Disqualifier vite est plus rentable que convaincre longtemps. Un "non" en 3 minutes vaut mieux qu'un "peut-être" en trois semaines.</div>
+    </div></details>
+
+    <details class="panel"><summary>6. Le déploiement, concrètement</summary><div class="body"><ul class="tight">
+      <li>Le client crée un compte Streamlit gratuit, ou nous donne accès au sien.</li>
+      <li>On déploie depuis un dépôt privé : l'application est <b>privée par défaut</b>.</li>
+      <li>On ajoute les emails de son équipe à la liste des lecteurs autorisés. Connexion par Google ou par lien à usage unique.</li>
+      <li>Ses adresses restent sur son compte : nous n'hébergeons rien, le RGPD reste de son côté.</li>
+    </ul><div class="warnb" style="margin-top:9px"><b>Deux limites à annoncer à l'oral, avant la signature :</b> l'application s'endort après 12 heures sans utilisation (quelques secondes de réveil au premier accès du matin), et le plan gratuit est limité à une application privée par compte.</div>
+    </div></details>
+
+    <details class="panel"><summary>7. Ce qu'on ne promet jamais</summary><div class="body"><ul class="tight">
+      <li>Aucune garantie de disponibilité. On ne vend pas un service hébergé.</li>
+      <li>Aucun délai de correction contractuel au-delà des 30 jours suivant le déploiement.</li>
+      <li>Aucun chiffre d'économie garanti. On calcule une estimation avec ses chiffres, on dit "estimation".</li>
+      <li>Aucune fonction qui n'existe pas encore. Une demande de fonction est un devis à la journée.</li>
+      <li>Aucune reprise de ses données par nous : il reste propriétaire et hébergeur.</li>
+    </ul><div class="redb" style="margin-top:9px">En cas de doute pendant un appel : "Je ne veux pas vous répondre à côté, je vérifie et je vous rappelle." Personne n'a jamais perdu une vente en vérifiant.</div>
+    </div></details>
+  </div>
+
+  <!-- ================= REVENUS ================= -->
+  <div id="pgF" class="hide">
+    <div class="card"><h2>Simulateur d'activité</h2>
+      <p class="muted" style="font-size:.84rem">Bouge les curseurs jusqu'à trouver le rythme qui correspond à ce que tu veux gagner.</p></div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="sld"><label>Prospects contactés par semaine <b id="wN">40</b></label><input type="range" id="sN" min="5" max="200" step="5" value="40"></div>
+        <div class="sld"><label>% qui répondent ou décrochent <b id="wR">20 %</b></label><input type="range" id="sR" min="3" max="60" step="1" value="20"></div>
+        <div class="sld"><label>% qui acceptent le POC <b id="wD">25 %</b></label><input type="range" id="sD" min="5" max="70" step="1" value="25"></div>
+        <div class="sld"><label>% qui signent après le POC <b id="wS">30 %</b></label><input type="range" id="sS" min="5" max="80" step="1" value="30"></div>
+        <div class="sld"><label>Semaines travaillées <b id="wW">24</b></label><input type="range" id="sW" min="4" max="48" step="1" value="24"></div>
+        <div class="note">Le POC coûte du temps de déploiement, pas de l'argent. Un taux de POC élevé est une bonne nouvelle même si tout ne signe pas.</div>
+      </div>
+      <div>
+        <div class="card"><h3>L'entonnoir sur la période</h3><div class="funnel" id="fun"></div></div>
+        <div class="card"><h3>Résultat</h3>
+          <div class="grid g3">
+            <div class="kpi"><div class="lbl">Ventes</div><div class="big" id="oVen">-</div></div>
+            <div class="kpi"><div class="lbl">Chiffre d'affaires</div><div class="big" id="oCa">-</div></div>
+            <div class="kpi"><div class="lbl">Commission closer</div><div class="big g" id="oCom">-</div></div>
+          </div>
+          <div class="kpi" style="margin-top:11px"><div class="lbl">Net estimé pour Romain (après cotisations et commission)</div>
+            <div class="big" id="oNet">-</div>
+            <div class="note">Estimation : environ 21 % de cotisations sur le chiffre d'affaires, puis 40 % de commission. Fais confirmer ton taux exact.</div></div>
+          <div id="oCap" style="margin-top:11px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ====================== constantes ====================== */
+const PRIX = 1900, MODIF_JOUR = 450, COMM = 0.40, URSSAF = 0.21, PLAFOND = 77700;
+const SUIVI = ["statut","date_contact","canal","date_relance","notes",
+               "produit","montant_vendu","date_vente","paye",
+               "montant_encaisse","commission","statut_livraison"];
+const STATUTS = ["a contacter","contacte","relance","interesse","rdv","client","refuse","injoignable","hors cible"];
+const CANAUX = ["email","telephone","linkedin","courrier","visite"];
+const PRODUITS = ["POC","Deploiement","Modification"];
+const LIVRAISON = ["a faire","en cours","livre"];
+const SANS_COMM = ["modification"];
+const TOUCHE = s => !!s && s !== "a contacter";
+
+const METIERS = {
+  reseaux:{nom:"Réseaux et télécoms",n:4602,
+    d:"Des raccordements et interventions fibre dispersés sur de larges zones, des techniciens qui se croisent, un ordre du jour reconstruit chaque matin dans Excel.",
+    ouv:"j'appelle les entreprises de travaux sur réseaux qui envoient des techniciens sur des interventions dispersées. La raison de mon appel : on réduit les kilomètres entre deux raccordements.",
+    dec:"Vos techniciens partent tous de la même base, ou de chez eux ? Et qui reconstruit l'ordre des interventions le matin ?"},
+  cvc:{nom:"Chauffage, clim, isolation",n:4491,
+    d:"Des entretiens annuels concentrés sur quelques mois, un planning saisonnier qu'on n'arrive plus à équilibrer à la main.",
+    ouv:"j'appelle les installateurs et mainteneurs en génie climatique. La raison de mon appel : la période d'entretiens, quand il faut caser trois fois plus de visites dans le même mois.",
+    dec:"Combien de visites d'entretien par technicien et par jour en pleine saison ? Et comment vous décidez de l'ordre ?"},
+  maintenance:{nom:"Maintenance et ascenseurs",n:1960,
+    d:"Des visites périodiques réglementaires sur un parc dispersé, avec des tournées héritées jamais rejouées depuis des années.",
+    ouv:"j'appelle les entreprises de maintenance d'équipements. La raison de mon appel : les visites périodiques, quand le parc a grandi mais que les tournées n'ont pas bougé.",
+    dec:"Vos tournées de visite périodique, elles ont été construites quand ? Elles sont recalculées à chaque nouveau contrat ?"},
+  securite:{nom:"Sécurité et alarmes",n:2156,
+    d:"Des rondes à recomposer et des dépannages d'alarme en urgence qui font sauter le planning du jour.",
+    ouv:"j'appelle les sociétés de sécurité qui font des rondes et du SAV sur site. La raison de mon appel : le moment où une urgence casse la tournée prévue.",
+    dec:"Vos rondes suivent un ordre fixe ? Et quand une intervention urgente tombe, qui refait le parcours ?"},
+  controle:{nom:"Contrôle, inspection, diagnostic",n:724,
+    d:"Des inspecteurs avec des visites réglementaires à périodicité fixe, et des zones qui se chevauchent sans que personne ne l'ait décidé.",
+    ouv:"j'appelle les bureaux de contrôle et sociétés d'inspection. La raison de mon appel : les zones d'inspection qui se chevauchent, et les kilomètres que ça coûte sans qu'on le voie.",
+    dec:"Chaque inspecteur a son secteur, ou vous répartissez au fil des demandes ? Combien de visites par jour en moyenne ?"},
+  proprete:{nom:"Propreté et espaces verts",n:7399,
+    d:"Des agents sur de nombreux sites, un planning quotidien reconstruit à chaque absence, des sites ajoutés en cours de mois sans revoir les tournées.",
+    ouv:"j'appelle les entreprises de propreté multi-sites. La raison de mon appel : le planning à refaire dès qu'un agent est absent ou qu'un site s'ajoute.",
+    dec:"Combien de sites par agent et par jour ? Et quand quelqu'un manque, combien de temps ça vous prend de réorganiser ?"},
+  environnement:{nom:"Assainissement et déchets",n:704,
+    d:"Des tournées de collecte et de curage avec des camions qui coûtent cher au kilomètre, sur des itinéraires figés depuis des années.",
+    ouv:"j'appelle les entreprises de collecte et d'assainissement. La raison de mon appel : le coût au kilomètre d'un camion, et les itinéraires qu'on n'a pas rejoués depuis longtemps.",
+    dec:"Vos tournées de collecte, elles datent de quand ? Vous connaissez votre coût au kilomètre par véhicule ?"},
+  livraison:{nom:"Livraison et messagerie",n:5862,
+    d:"Des tournées qui changent tous les jours, un ordre des arrêts laissé au chauffeur, des kilomètres que personne ne mesure.",
+    ouv:"j'appelle les transporteurs et messagers de proximité. La raison de mon appel : l'ordre des arrêts, quand c'est le chauffeur qui décide et que personne ne mesure les kilomètres.",
+    dec:"Vos chauffeurs reçoivent une liste ou une tournée déjà ordonnée ? Combien d'arrêts par jour et par véhicule ?"},
+  depannage:{nom:"Dépannage à domicile",n:227,
+    d:"Des interventions distribuées au fil des appels, des techniciens qui traversent la ville deux fois dans la journée.",
+    ouv:"j'appelle les entreprises de dépannage à domicile. La raison de mon appel : les allers-retours inutiles quand les interventions sont distribuées au fil des appels.",
+    dec:"Vous affectez les interventions au fur et à mesure, ou vous regroupez par zone en fin de journée ?"}
+};
+
+const $ = id => document.getElementById(id);
+const eur = n => Math.round(n).toLocaleString("fr-FR") + " €";
+const nb  = n => Math.round(n).toLocaleString("fr-FR");
+const pct = n => (isFinite(n) ? (n*100).toFixed(1).replace(".",",") : "0") + " %";
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const enc = encodeURIComponent;
+const num = v => { const n = parseFloat(String(v??"").replace(",",".").replace(/\s/g,"")); return isNaN(n)?0:n; };
+const today = () => new Date().toISOString().slice(0,10);
+
+/* ====================== navigation ====================== */
+const PAGES = ["pgP","pgK","pgR","pgS","pgB","pgF"];
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x===b));
+  PAGES.forEach(p => $(p).classList.toggle("hide", p!==b.dataset.pg));
+  if(b.dataset.pg === "pgK") kpi();
+  window.scrollTo({top:0});
+});
+
+/* ====================== CSV ====================== */
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,"");
+  const nl = text.indexOf("\n"), head = text.slice(0, nl<0?text.length:nl);
+  let d = ",";
+  const c = [[",",(head.match(/,/g)||[]).length],[";",(head.match(/;/g)||[]).length],["\t",(head.match(/\t/g)||[]).length]];
+  c.sort((a,b)=>b[1]-a[1]); if(c[0][1]>0) d = c[0][0];
+  const rows=[]; let f="", row=[], q=false;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===d){ row.push(f); f=""; }
+    else if(ch==="\n"){ row.push(f); rows.push(row); row=[]; f=""; }
+    else if(ch!=="\r") f+=ch;
+  }
+  if(f!=="" || row.length){ row.push(f); rows.push(row); }
+  if(!rows.length) return {cols:[],data:[]};
+  const cols = rows[0].map(h=>h.trim());
+  const data = rows.slice(1).filter(r=>r.some(v=>String(v).trim()!==""))
+    .map(r=>{ const o={}; cols.forEach((c,i)=>o[c]=(r[i]??"").trim()); return o; });
+  return {cols,data};
+}
+function toCSV(cols,data){
+  const q = v => { v = v==null?"":String(v); return /[",\n\r]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  return cols.join(",")+"\n"+data.map(r=>cols.map(c=>q(r[c])).join(",")).join("\n")+"\n";
+}
+
+/* ====================== état et sauvegarde ====================== */
+let COLS=[], DATA=[], VIEW=[], CUR=null, FH=null, FNAME="", DIRTY=0, SAVING=false, LAST=null, ERR="", T=null;
+const canFS = typeof window.showOpenFilePicker === "function";
+const secure = ["localhost","127.0.0.1"].includes(location.hostname) || location.protocol === "https:";
+if(!canFS){
+  $("open").disabled = true; $("nofs").classList.remove("hide");
+} else if(!secure){
+  $("nofs").classList.remove("hide");
+  $("nofs").innerHTML = "<b>Tu as ouvert un fichier local.</b> L'écriture directe exige une adresse en HTTPS : "
+    + "utilise <b>https://romtaug.github.io/prospection-tournees/</b>. Depuis un fichier local, seul le "
+    + "glisser-déposer fonctionne (avec téléchargement manuel du CSV).";
+}
+
+async function ensureRW(h){
+  if(!h.queryPermission) return true;
+  const o = {mode:"readwrite"};
+  if(await h.queryPermission(o) === "granted") return true;
+  return (await h.requestPermission(o)) === "granted";
+}
+$("open").onclick = async () => {
+  try{
+    const [h] = await window.showOpenFilePicker({multiple:false,
+      types:[{description:"CSV",accept:{"text/csv":[".csv"],"text/plain":[".csv"]}}]});
+    if(!await ensureRW(h)){ info("Permission d'écriture refusée. Réessaie et accepte, ou utilise le glisser-déposer.", true); return; }
+    const f = await h.getFile();
+    if(load(await f.text(), f.name)) FH = h;
+  }catch(e){ if(e.name!=="AbortError") info("Écriture directe indisponible ("+e.message
+    +"). C'est normal si tu as ouvert ce fichier par double-clic : l'API exige HTTPS ou localhost. "
+    +"Ouvre cette page depuis son adresse en ligne (https://romtaug.github.io/prospection-tournees/) "
+    +"et non depuis un fichier local, ou utilise le glisser-déposer.", true); }
+};
+function touch(){
+  DIRTY++;
+  if(FH){ clearTimeout(T); T = setTimeout(save, 600); }
+  paint(); kpi();
+}
+async function save(){
+  if(!FH || SAVING) return;
+  SAVING = true; ERR = ""; paint();
+  try{
+    const w = await FH.createWritable();
+    await w.write("\uFEFF" + toCSV(COLS, DATA));
+    await w.close();
+    DIRTY = 0; LAST = new Date();
+  }catch(e){ ERR = e.message; }
+  SAVING = false; paint();
+}
+function paint(){
+  const h = SAVING ? '<span class="dot bz"></span>Enregistrement...'
+    : ERR ? '<span class="dot off"></span><span style="color:var(--bad)">Échec : '+esc(ERR)+'. Télécharge une copie.</span>'
+    : FH ? '<span class="dot on"></span>Connecté à <b>'+esc(FNAME)+'</b>'+(LAST?' · enregistré à '+LAST.toLocaleTimeString("fr-FR"):'')
+    : '<span class="dot off"></span>Mode lecture seule · <b>'+DIRTY+'</b> modification(s) à télécharger';
+  $("state").innerHTML = h;
+}
+function info(t, bad){ $("loadinfo").innerHTML = bad ? '<span style="color:var(--bad)">'+esc(t)+'</span>' : t; }
+
+/* ---- glisser-deposer (mode lecture seule) ---- */
+const drop = $("drop"), file = $("file");
+drop.onclick = () => file.click();
+drop.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); file.click(); } };
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("hot");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("hot");}));
+drop.addEventListener("drop", e => { const f=e.dataTransfer.files[0]; if(f) readFile(f); });
+file.onchange = e => { const f=e.target.files[0]; if(f) readFile(f); };
+function readFile(f){
+  const r = new FileReader();
+  r.onerror = () => info("Lecture impossible.", true);
+  r.onload = () => { if(load(r.result, f.name)) FH = null; };
+  r.readAsText(f,"utf-8");
+}
+
+function load(text, name){
+  const {cols,data} = parseCSV(text);
+  if(!cols.length || !data.length){ info("Fichier vide ou illisible.", true); return false; }
+  if(!cols.includes("nom") || !cols.includes("siren")){
+    info('Ce fichier n\'a pas les colonnes "nom" et "siren". Utilise un CSV produit par export_crm.py.', true); return false;
+  }
+  COLS = cols.slice(); DATA = data; FNAME = name; DIRTY = 0; LAST = null; ERR = ""; CUR = null;
+  SUIVI.forEach(c => { if(!COLS.includes(c)){ COLS.push(c); DATA.forEach(r=>r[c]=""); } });
+  DATA.forEach(r => { SUIVI.forEach(c=>r[c]=r[c]??""); if(!r.statut) r.statut="a contacter"; });
+  info("Chargé : <b>"+nb(DATA.length)+"</b> prospects, "+COLS.length+" colonnes ("+esc(name)+").");
+  fillSelects(); $("work").classList.remove("hide"); refresh(); paint(); kpi();
+  return true;
+}
+function fillSelects(){
+  const uniq = k => [...new Set(DATA.map(r=>(r[k]||"").trim()).filter(Boolean))].sort();
+  $("fType").innerHTML = '<option value="">Tous métiers</option>' + uniq("type").map(v=>'<option>'+esc(v)+'</option>').join("");
+  $("fStat").innerHTML = '<option value="">Tous statuts</option>' + STATUTS.map(v=>'<option>'+v+'</option>').join("");
+}
+
+/* ====================== liste ====================== */
+["q","fType","fTier","fStat","cEmail","cMulti","cTodo","cRel"].forEach(id=>{
+  const el=$(id); el.addEventListener(el.type==="checkbox"?"change":"input", refresh);
+});
+function refresh(){
+  const q=$("q").value.toLowerCase().trim(), t=$("fType").value, ti=$("fTier").value, st=$("fStat").value;
+  const oe=$("cEmail").checked, om=$("cMulti").checked, ot=$("cTodo").checked, or_=$("cRel").checked;
+  const td = today();
+  VIEW = DATA.filter(r=>{
+    if(t && r.type!==t) return false;
+    if(ti && (r.tier||"").toUpperCase()!==ti) return false;
+    if(st && r.statut!==st) return false;
+    if(oe && !r.email) return false;
+    if(om && num(r.nb_etablissements_ouverts)<2) return false;
+    if(ot && TOUCHE(r.statut)) return false;
+    if(or_ && !(r.date_relance && r.date_relance<=td)) return false;
+    if(q && ![r.nom,r.commune,r.ville,r.dirigeant,r.libelle,r.siren].join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a,b)=> num(b.score)-num(a.score)
+      || num(b.nb_etablissements_ouverts)-num(a.nb_etablissements_ouverts)
+      || (a.nom||"").localeCompare(b.nom||""));
+  $("count").textContent = nb(VIEW.length)+" prospect(s) sur "+nb(DATA.length);
+  const cap = VIEW.slice(0,300);
+  $("tb").innerHTML = cap.map((r,i)=>{
+    const tr=(r.tier||"").toUpperCase();
+    const cls = tr==="A"?"b-a":tr==="B"?"b-b":"b-c";
+    const rel = r.date_relance && r.date_relance<=today();
+    return '<tr class="click'+(r===CUR?" sel":"")+'" data-i="'+i+'">'
+      +'<td data-go="1"><b>'+esc(r.nom)+'</b>'+(rel?' <span class="badge b-x">RELANCE</span>':'')
+        +'<br><span class="muted" style="font-size:.74rem">'+esc(r.commune||r.ville||"")
+        +(r.departement?" · "+esc(r.departement):"")+'</span></td>'
+      +'<td data-go="1">'+(tr?'<span class="badge '+cls+'">'+tr+'</span>':'<span class="muted">-</span>')+'</td>'
+      +'<td data-go="1" class="num">'+(r.score||"-")+'</td>'
+      +'<td><select class="mini" data-st="'+i+'">'
+        +STATUTS.map(v=>'<option'+(r.statut===v?" selected":"")+'>'+v+'</option>').join("")+'</select></td></tr>';
+  }).join("") + (VIEW.length>300?'<tr><td colspan="4" class="muted" style="font-size:.77rem">Seuls les 300 premiers sont affichés. Affine les filtres.</td></tr>':"");
+
+  $("tb").querySelectorAll("td[data-go]").forEach(td => td.onclick = () => {
+    CUR = cap[+td.parentElement.dataset.i]; refresh(); fiche();
+  });
+  $("tb").querySelectorAll("select[data-st]").forEach(s => s.onchange = () => {
+    const r = cap[+s.dataset.st];
+    r.statut = s.value;
+    if(TOUCHE(r.statut) && !r.date_contact) r.date_contact = today();
+    touch();
+    if(CUR === r) fiche();
+  });
+}
+
+/* ====================== fiche ====================== */
+function fiche(){
+  const r = CUR; if(!r) return;
+  const tr=(r.tier||"").toUpperCase(), met=METIERS[r.type]||null;
+  const ag=num(r.nb_etablissements_ouverts), tel=(r.telephone||"").replace(/[^0-9+]/g,"");
+  const ville=r.ville||r.commune||"";
+  const mapQ = (r.latitude&&r.longitude) ? r.latitude+","+r.longitude
+             : [r.adresse,r.cp,ville].filter(Boolean).join(" ");
+  const prenom=(r.dirigeant||"").trim().split(/\s+/).slice(-1)[0]||"";
+  const body = "Bonjour"+(prenom?" "+prenom:"")+",\n\n"+(met?met.d+"\n\n":"")
+    +"Nous déployons pour les entreprises comme la vôtre un optimiseur de tournées : vous importez votre fichier d'interventions, l'outil sort les tournées optimales de vos équipes sur les distances routières réelles, avec les feuilles de route Google Maps et Waze et un export Excel des kilomètres et des coûts économisés.\n\n"
+    +"Trois points qui vous concernent :\n"
+    +"- pas d'abonnement, pas de licence par utilisateur : un déploiement, usage illimité\n"
+    +"- l'application est à vos couleurs, sur votre propre compte, en accès privé\n"
+    +"- je vous la déploie gratuitement avec vos vraies adresses pour que vous jugiez sur pièces\n\n"
+    +"Si le sujet vous parle, envoyez-moi un export de vos interventions, même brut. Je vous rappelle avec l'outil en ligne.\n\nBien à vous,";
+  const mail = r.email ? "mailto:"+r.email+"?subject="+enc("Optimisation de vos tournées - "+(r.nom||""))+"&body="+enc(body) : "";
+  const L=(u,t)=> u?'<a class="btn sm" href="'+esc(u)+'" target="_blank" rel="noopener">'+t+'</a>':"";
+  const line=(k,v)=> v?'<dt>'+k+'</dt><dd>'+esc(v)+'</dd>':"";
+  const opt=(v,cur)=>'<option'+(cur===v?" selected":"")+'>'+v+'</option>';
+  const ca=num(r.ca), caP=num(r.ca_prev);
+
+  $("fiche").innerHTML = '<div class="card">'
+    +'<h2>'+esc(r.nom)+'</h2>'
+    +'<div class="badges">'
+      +(tr?'<span class="badge '+(tr==="A"?"b-a":tr==="B"?"b-b":"b-c")+'">TIER '+tr+(r.score?" · "+r.score+"/100":"")+'</span>':"")
+      +(met?'<span class="badge b-t">'+esc(met.nom)+'</span>':"")
+      +(ag>=2?'<span class="badge b-m">'+ag+' AGENCES OUVERTES</span>':"")
+      +(!r.email?'<span class="badge b-x">PAS D\'EMAIL - APPELER</span>':"")
+      +(r.email_status==="mx_ok"?'<span class="badge b-a">EMAIL VÉRIFIÉ</span>':"")
+      +(r.signaux_bodacc?'<span class="badge b-x">SIGNAL BODACC</span>':"")
+    +'</div>'
+    +(met?'<div class="warnb" style="margin-bottom:9px"><b>Son problème :</b> '+esc(met.d)+'</div>':"")
+    +'<div class="row" style="margin-bottom:11px">'
+      +(tel?'<a class="btn primary" href="tel:'+esc(tel)+'">Appeler '+esc(r.telephone)+'</a>':"")
+      +(mail?'<a class="btn sec" href="'+esc(mail)+'">Email de présentation</a>':"")
+    +'</div>'
+    +'<div class="grid g22">'
+      +'<div><h3>Contact</h3><dl class="kv">'+line("Dirigeant",r.dirigeant)+line("Fonction",r.qualite)
+        +line("Téléphone",r.telephone)+line("Email",r.email)+line("Autres emails",r.autres_emails)+line("Site",r.domain)+'</dl></div>'
+      +'<div><h3>Entreprise</h3><dl class="kv">'+line("Activité",r.libelle)+line("Effectif",r.effectif)+line("Catégorie",r.categorie)
+        +(ca?'<dt>CA</dt><dd>'+eur(ca)+(caP?' <span class="muted">(n-1 '+eur(caP)+')</span>':"")+'</dd>':"")
+        +line("Ancienneté",r.anciennete?r.anciennete+" ans":"")
+        +(ag?'<dt>Établissements</dt><dd>'+ag+" ouverts"+(r.nb_etablissements?" / "+r.nb_etablissements:"")+'</dd>':"")
+        +line("Labels",r.labels)+line("TVA intra",r.tva_intra)+line("SIREN",r.siren)+'</dl></div>'
+    +'</div>'
+    +(ag>=2?'<div class="okb" style="margin-top:9px"><b>'+ag+' établissements ouverts.</b> Plus de véhicules et des sites plus dispersés, donc un ROI plus élevé et une vente plus facile. Le prix reste 1 900 € pour toute l\'entreprise.</div>':"")
+    +'<h3 style="margin-top:13px">Qualifier en 30 secondes</h3><div class="row" style="margin-top:5px">'
+      +L(r.lien_maps,"Maps")+L(r.lien_google,"Google")+L(r.lien_pappers,"Pappers")+L(r.lien_annuaire,"Annuaire")
+      +L(r.linkedin||r.lien_linkedin_rech,"LinkedIn")+L(r.lien_pagesjaunes,"Pages Jaunes")
+      +L(r.lien_societe,"societe.com")+L(r.lien_trustpilot,"Trustpilot")
+      +(mapQ?L("https://www.google.com/maps/dir/?api=1&destination="+enc(mapQ),"Itinéraire"):"")
+    +'</div>'
+    +(r.adresse||ville?'<div class="note">'+esc([r.adresse,r.cp,ville].filter(Boolean).join(", "))+'</div>':"")
+    +(mapQ?'<iframe class="fmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q='+enc(mapQ)+'&z=13&output=embed"></iframe>':"")
+    +(met?'<h3 style="margin-top:13px">Son ouverture d\'appel</h3>'
+      +'<div class="sline"><span class="lab">Ouverture</span>"Bonjour, '+(prenom?esc(prenom)+" ? ":"")+'Vous ne m\'attendiez pas, je prends 30 secondes. '+esc(met.ouv)+'"</div>'
+      +'<div class="sline"><span class="lab">Découverte</span>"'+esc(met.dec)+'"</div>':"")
+
+    +'<h3 style="margin-top:13px">Suivi</h3><div class="grid g22" style="margin-top:5px">'
+      +'<div><label class="f" for="eSt">Statut</label><select id="eSt">'+STATUTS.map(v=>opt(v,r.statut)).join("")+'</select></div>'
+      +'<div><label class="f" for="eCa">Canal</label><select id="eCa"><option value=""></option>'+CANAUX.map(v=>opt(v,r.canal)).join("")+'</select></div>'
+      +'<div><label class="f" for="eDc">Date de contact</label><input id="eDc" type="date" value="'+esc(r.date_contact)+'"></div>'
+      +'<div><label class="f" for="eDr">Date de relance</label><input id="eDr" type="date" value="'+esc(r.date_relance)+'"></div>'
+    +'</div>'
+    +'<div style="margin-top:7px"><label class="f" for="eNo">Notes</label><textarea id="eNo" placeholder="Ce qui s\'est dit, objections, chiffres donnés, prochaine étape...">'+esc(r.notes)+'</textarea></div>'
+
+    +'<h3 style="margin-top:13px">Vente</h3><div class="grid g22" style="margin-top:5px">'
+      +'<div><label class="f" for="ePr">Produit</label><select id="ePr"><option value=""></option>'+PRODUITS.map(v=>opt(v,r.produit)).join("")+'</select></div>'
+      +'<div><label class="f" for="eMv">Montant vendu (€)</label><input id="eMv" type="number" min="0" step="50" value="'+esc(r.montant_vendu)+'"></div>'
+      +'<div><label class="f" for="eDv">Date de vente</label><input id="eDv" type="date" value="'+esc(r.date_vente)+'"></div>'
+      +'<div><label class="f" for="ePy">Payé</label><select id="ePy"><option value=""></option>'+["Oui","Non"].map(v=>opt(v,r.paye)).join("")+'</select></div>'
+      +'<div><label class="f" for="eMe">Montant encaissé (€)</label><input id="eMe" type="number" min="0" step="50" value="'+esc(r.montant_encaisse)+'"></div>'
+      +'<div><label class="f" for="eLi">Livraison</label><select id="eLi"><option value=""></option>'+LIVRAISON.map(v=>opt(v,r.statut_livraison)).join("")+'</select></div>'
+    +'</div>'
+    +'<div class="kpi" style="margin-top:8px"><div class="lbl">Ta commission sur cette ligne</div>'
+      +'<div class="big g" id="eCom">'+(r.commission?eur(num(r.commission)):"-")+'</div>'
+      +'<div class="note" id="eComN">40 % de l\'encaissé. Zéro sur les modifications, qui sont du développement.</div></div>'
+    +'<div class="row" style="margin-top:10px"><button class="btn primary" id="apply">Enregistrer</button>'
+      +'<span class="muted" style="font-size:.77rem" id="saved"></span></div>'
+  +'</div>';
+
+  const ids = ["eSt","eCa","eDc","eDr","eNo","ePr","eMv","eDv","ePy","eMe","eLi"];
+  const commLive = () => {
+    const enc_ = num($("eMe").value), sans = SANS_COMM.includes(($("ePr").value||"").toLowerCase());
+    $("eCom").textContent = enc_ ? (sans ? eur(0) : eur(enc_*COMM)) : "-";
+    $("eComN").textContent = sans && enc_ ? "Aucune commission : une modification est du développement, pas une vente."
+      : "40 % de l'encaissé. Zéro sur les modifications, qui sont du développement.";
+  };
+  ["eMe","ePr"].forEach(i => $(i).addEventListener("input", commLive));
+  const applyRow = () => {
+    r.statut=$("eSt").value; r.canal=$("eCa").value; r.date_contact=$("eDc").value;
+    r.date_relance=$("eDr").value; r.notes=$("eNo").value;
+    r.produit=$("ePr").value; r.montant_vendu=$("eMv").value; r.date_vente=$("eDv").value;
+    r.paye=$("ePy").value; r.montant_encaisse=$("eMe").value; r.statut_livraison=$("eLi").value;
+    const e = num(r.montant_encaisse), sans = SANS_COMM.includes((r.produit||"").toLowerCase());
+    r.commission = e ? String(Math.round(sans?0:e*COMM)) : "";
+    if(TOUCHE(r.statut) && !r.date_contact){ r.date_contact = today(); $("eDc").value = r.date_contact; }
+    if(r.statut === "client" && !r.date_vente && r.montant_vendu){ r.date_vente = today(); $("eDv").value = r.date_vente; }
+    touch(); commLive(); refresh();
+    $("saved").textContent = FH ? "Écrit dans le fichier." : "En mémoire : télécharge la copie avant de fermer.";
+  };
+  $("apply").onclick = applyRow;
+  ids.forEach(i => $(i).addEventListener("change", applyRow));
+}
+
+/* ====================== barre du bas ====================== */
+$("dl").onclick = () => {
+  const b = new Blob(["\uFEFF"+toCSV(COLS,DATA)],{type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b); a.download = FNAME||"crm_tournees.csv"; a.click();
+  URL.revokeObjectURL(a.href);
+  if(!FH){ DIRTY = 0; paint(); }
+};
+$("reload").onclick = async () => {
+  if(!FH){ info("Rechargement possible uniquement en écriture directe. Reprends le fichier.", true); return; }
+  if(DIRTY && !confirm("Il reste "+DIRTY+" modification(s) non enregistrée(s). Recharger quand même ?")) return;
+  const f = await FH.getFile(); const h = FH; if(load(await f.text(), f.name)) FH = h;
+};
+$("close").onclick = () => {
+  if(DIRTY && !FH && !confirm("Il reste "+DIRTY+" modification(s) non téléchargée(s). Fermer quand même ?")) return;
+  DATA=[]; COLS=[]; CUR=null; FH=null; DIRTY=0; LAST=null;
+  $("work").classList.add("hide"); $("kBody").classList.add("hide"); $("kEmpty").classList.remove("hide");
+  info(""); file.value="";
+};
+window.addEventListener("beforeunload", e => { if(DIRTY && !FH){ e.preventDefault(); e.returnValue=""; } });
+
+/* ====================== tableau de bord ====================== */
+function kpi(){
+  if(!DATA.length){ $("kEmpty").classList.remove("hide"); $("kBody").classList.add("hide"); return; }
+  $("kEmpty").classList.add("hide"); $("kBody").classList.remove("hide");
+  const n = DATA.length, c = f => DATA.filter(f).length;
+  $("kTot").textContent = nb(n);
+  $("kA").textContent   = nb(c(r=>(r.tier||"").toUpperCase()==="A"));
+  $("kMail").textContent= nb(c(r=>r.email));
+  $("kMul").textContent = nb(c(r=>num(r.nb_etablissements_ouverts)>=2));
+
+  const touched = c(r=>TOUCHE(r.statut));
+  $("kPipe").innerHTML = '<thead><tr><th>Statut</th><th>Nombre</th><th>Part</th></tr></thead><tbody>'
+    + STATUTS.map(s=>{ const k=c(r=>r.statut===s);
+        return '<tr><td>'+s+'</td><td class="num">'+nb(k)+'</td><td class="muted">'+pct(k/n)+'</td></tr>'; }).join("")
+    + '</tbody>';
+  $("kPct").innerHTML = '<b>'+nb(touched)+'</b> touchés sur '+nb(n)+' ('+pct(touched/n)+')';
+  $("kBar").style.width = Math.min(100, touched/n*100)+"%";
+
+  const vend = DATA.reduce((s,r)=>s+num(r.montant_vendu),0);
+  const enca = DATA.reduce((s,r)=>s+num(r.montant_encaisse),0);
+  const comm = DATA.reduce((s,r)=>s+num(r.commission),0);
+  const cli  = c(r=>r.statut==="client");
+  $("kVen").textContent=eur(vend); $("kEnc").textContent=eur(enca);
+  $("kDu").textContent=eur(Math.max(0,vend-enca)); $("kCom").textContent=eur(comm);
+  $("kCli").textContent=nb(cli);
+  $("kConv").textContent= touched? pct(cli/touched) : "-";
+  $("kPan").textContent= cli? eur(enca/cli) : "-";
+  $("kNet").textContent= eur(enca - enca*URSSAF - comm);
+
+  $("kLiv").innerHTML = '<thead><tr><th>État</th><th>Nombre</th></tr></thead><tbody>'
+    + LIVRAISON.concat(["(vide)"]).map(v=>{
+        const k = v==="(vide)" ? c(r=>!r.statut_livraison) : c(r=>r.statut_livraison===v);
+        return '<tr><td>'+v+'</td><td class="num">'+nb(k)+'</td></tr>'; }).join("") + '</tbody>';
+
+  const types = [...new Set(DATA.map(r=>r.type).filter(Boolean))]
+    .sort((a,b)=>c(r=>r.type===b)-c(r=>r.type===a));
+  $("kMet").innerHTML = '<thead><tr><th>Métier</th><th>Lignes</th><th>Tier A</th><th>Touchés</th><th>Clients</th><th>Encaissé</th></tr></thead><tbody>'
+    + types.map(t=>'<tr><td><b>'+esc(t)+'</b></td>'
+        +'<td class="num">'+nb(c(r=>r.type===t))+'</td>'
+        +'<td class="num">'+nb(c(r=>r.type===t&&(r.tier||"").toUpperCase()==="A"))+'</td>'
+        +'<td class="num">'+nb(c(r=>r.type===t&&TOUCHE(r.statut)))+'</td>'
+        +'<td class="num">'+nb(c(r=>r.type===t&&r.statut==="client"))+'</td>'
+        +'<td class="num">'+eur(DATA.filter(r=>r.type===t).reduce((s,r)=>s+num(r.montant_encaisse),0))+'</td></tr>').join("")
+    + '</tbody>';
+
+  const td = today();
+  const rel = DATA.filter(r=>r.date_relance && r.date_relance<=td)
+                  .sort((a,b)=>(a.date_relance||"").localeCompare(b.date_relance||"")).slice(0,25);
+  $("kRel").innerHTML = rel.length
+    ? '<thead><tr><th>Date</th><th>Entreprise</th><th>Statut</th><th>Notes</th></tr></thead><tbody>'
+      + rel.map(r=>'<tr><td class="num">'+esc(r.date_relance)+'</td><td><b>'+esc(r.nom)+'</b></td>'
+        +'<td>'+esc(r.statut)+'</td><td class="muted">'+esc((r.notes||"").slice(0,90))+'</td></tr>').join("")+'</tbody>'
+    : '<tbody><tr><td class="muted">Aucune relance due aujourd\'hui.</td></tr></tbody>';
+}
+
+/* ====================== ROI ====================== */
+["rV","rK","rC","rJ","rG","rT","rH"].forEach(id=>$(id).addEventListener("input",roi));
+function roi(){
+  const V=+$("rV").value,K=+$("rK").value,C=+$("rC").value,J=+$("rJ").value;
+  const G=+$("rG").value/100,T2=+$("rT").value,H=+$("rH").value;
+  $("vV").textContent=V; $("vK").textContent=K; $("vC").textContent=C.toFixed(2).replace(".",",")+" €";
+  $("vJ").textContent=J; $("vG").textContent=(G*100)+" %"; $("vT").textContent=T2+" min"; $("vH").textContent=H+" €";
+  const kmAn=V*K*J, kmEco=kmAn*G, eurKm=kmEco*C;
+  const hEco=(T2/60)*J*0.6, eurH=hEco*H, co2=kmEco*0.22, tot=eurKm+eurH;
+  $("oKm").textContent=nb(kmEco)+" km"; $("oEur").textContent=eur(eurKm);
+  $("oH").textContent=nb(hEco)+" h"; $("oCo2").textContent=(co2/1000).toFixed(1).replace(".",",")+" t";
+  $("oTot").textContent=eur(tot);
+  const j = tot>0 ? Math.max(1, Math.round(PRIX/(tot/J))) : 0;
+  $("oRoi").innerHTML = tot>0
+    ? "Sur "+nb(kmAn)+" km parcourus par an. Le déploiement à "+eur(PRIX)+" est remboursé en <b>"+j+" jours travaillés</b>, puis c'est du gain net. Estimation, pas une garantie."
+    : "Ajuste les curseurs avec ses chiffres.";
+  const pra=V*69*12, ant=V*68*12;
+  $("cPra").textContent=eur(pra); $("cAnt").textContent=eur(ant);
+  $("cGain").innerHTML = "Sur 3 ans, il paierait <b>"+eur(pra*3)+"</b> chez Praxedo contre <b>"+eur(PRIX)
+    +"</b> chez nous, soit <b>"+eur(pra*3-PRIX)+" d'écart</b>. C'est la phrase à dire.";
+}
+
+/* ====================== script ====================== */
+const sel=$("sMet");
+sel.innerHTML = Object.entries(METIERS).map(([k,m])=>'<option value="'+k+'">'+m.nom+'</option>').join("");
+sel.onchange = scriptM;
+function scriptM(){
+  const m = METIERS[sel.value] || Object.values(METIERS)[0];
+  $("sDoul").textContent = m.d;
+  $("scOuv").textContent = '"Bonjour, vous ne m\'attendiez pas, je prends 30 secondes et vous me dites si ça vaut le coup. '+m.ouv+'"';
+  $("scDec").textContent = '"'+m.dec+'"';
+}
+$("bTargets").innerHTML = Object.values(METIERS).sort((a,b)=>b.n-a.n)
+  .map(m=>'<tr><td><b>'+m.nom+'</b></td><td class="num">'+nb(m.n)+'</td><td class="muted">'+m.d+'</td></tr>').join("");
+
+/* ====================== simulateur ====================== */
+["sN","sR","sD","sS","sW"].forEach(id=>$(id).addEventListener("input",simu));
+function simu(){
+  const N=+$("sN").value,R=+$("sR").value/100,D=+$("sD").value/100,S=+$("sS").value/100,W=+$("sW").value;
+  $("wN").textContent=N; $("wR").textContent=(R*100)+" %"; $("wD").textContent=(D*100)+" %";
+  $("wS").textContent=(S*100)+" %"; $("wW").textContent=W;
+  const contacts=N*W, rep=contacts*R, poc=rep*D, ventes=poc*S;
+  const ca=ventes*PRIX, com=ca*COMM, net=ca-ca*URSSAF-com;
+  const steps=[["Contactés",contacts],["Réponses",rep],["POC déployés",poc],["Ventes",ventes]];
+  const max=Math.max(...steps.map(s=>s[1]),1);
+  $("fun").innerHTML = steps.map(([l,v])=>'<div class="fb" style="width:'+Math.max(24,v/max*100)+'%"><span>'+l+'</span><span>'+nb(v)+'</span></div>').join("");
+  $("oVen").textContent=nb(ventes); $("oCa").textContent=eur(ca);
+  $("oCom").textContent=eur(com); $("oNet").textContent=eur(net);
+  $("oCap").innerHTML = ca>PLAFOND
+    ? '<div class="redb"><b>Plafond micro-entreprise dépassé.</b> '+eur(ca)+' de chiffre d\'affaires contre '+eur(PLAFOND)+' autorisés en prestations de services. À ce rythme il faut passer en société, ou monter le prix.</div>'
+    : '<div class="okb">Dans le plafond micro-entreprise : '+eur(ca)+' sur '+eur(PLAFOND)+'. Marge restante : <b>'+eur(PLAFOND-ca)+'</b>, soit environ '+Math.floor((PLAFOND-ca)/PRIX)+' ventes.</div>';
+}
+
+roi(); scriptM(); simu(); paint();
+</script>
+</body>
+</html>
