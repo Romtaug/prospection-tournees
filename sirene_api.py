@@ -29,7 +29,7 @@ import time
 from collections import Counter
 
 from common import (load_config, naf_type_map, effectif_groups, all_departements,
-                    clean_siret, siren_of, USER_AGENT, BASE_COLS)
+                    clean_siret, siren_of, naf_label, USER_AGENT, BASE_COLS)
 
 try:
     import requests
@@ -76,7 +76,7 @@ def parse_result(res, tmap):
     return {"siren": siren, "siret": siret,
             "nom": res.get("nom_raison_sociale") or res.get("nom_complet") or "",
             "type": typ, "naf": naf,
-            "libelle": res.get("libelle_activite_principale") or "",
+            "libelle": naf_label(naf),   # l'API ne renvoie pas le libelle : rempli localement
             "commune": siege.get("libelle_commune") or "",
             "departement": dep, "telephone": "", "source": "sirene"}
 
