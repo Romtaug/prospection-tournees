@@ -10,3 +10,7 @@ base_tournees_enrichi.csv
 
 # ... sauf la base publiee par le workflow, committee volontairement :
 !data/base_tournees.csv
+
+# Le CRM est volontairement versionne (CSV, diffable) : ne pas l'ignorer.
+!crm/
+!crm/*.csv
