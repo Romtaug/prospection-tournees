@@ -4,7 +4,9 @@
 export_crm.py - Genere le CRM de prospection au format CSV.
 
 Prend la base enrichie et en fait un fichier de travail commercial :
- - ajoute 5 colonnes de suivi : statut, date_contact, canal, date_relance, notes ;
+ - ajoute 12 colonnes de suivi : prospection (statut, date_contact, canal,
+   date_relance, notes) et vente (produit, montant_vendu, date_vente, paye,
+   montant_encaisse, commission, statut_livraison) ;
  - remet les colonnes dans un ordre utile (identite, priorite, suivi, contact,
    liens, firmographie, identifiants) au lieu de l'ordre technique ;
  - trie par score decroissant : les meilleures lignes en haut ;
@@ -29,11 +31,18 @@ from collections import Counter
 from datetime import date
 
 # Colonnes de suivi commercial (ajoutees ici, jamais produites par enrich.py).
-SUIVI_COLS = ["statut", "date_contact", "canal", "date_relance", "notes"]
+# Bloc 1 : la prospection. Bloc 2 : la vente et l'encaissement.
+SUIVI_COLS = ["statut", "date_contact", "canal", "date_relance", "notes",
+              "produit", "montant_vendu", "date_vente", "paye",
+              "montant_encaisse", "commission", "statut_livraison"]
 STATUT_DEFAUT = "a contacter"
 STATUTS = ["a contacter", "contacte", "relance", "interesse", "rdv", "client",
-           "refuse", "injoignable"]
+           "refuse", "injoignable", "hors cible"]
 CANAUX = ["email", "telephone", "linkedin", "courrier", "visite"]
+PRODUITS = ["POC", "Deploiement", "Modification"]
+LIVRAISON = ["a faire", "en cours", "livre"]
+TAUX_COMMISSION = 0.40        # commission closer, sur l'encaisse
+SANS_COMMISSION = {"modification"}   # la modification est du developpement, pas de la vente
 
 # Ordre d'affichage des colonnes : ce qu'on lit en premier est a gauche.
 ORDRE = (["nom", "tier", "score"] + SUIVI_COLS +
@@ -143,6 +152,16 @@ def resume(rows):
     print("  suivi commercial :", file=sys.stderr)
     for s, c in Counter(r.get("statut", "") for r in rows).most_common():
         print(f"    {s:14s} {c:6d}", file=sys.stderr)
+    vendu = sum(num(r.get("montant_vendu")) for r in rows)
+    encaisse = sum(num(r.get("montant_encaisse")) for r in rows)
+    if vendu or encaisse:
+        print(f"  vendu       {vendu:10.0f} euros", file=sys.stderr)
+        print(f"  encaisse    {encaisse:10.0f} euros", file=sys.stderr)
+        com = sum(num(r.get("commission")) for r in rows)
+        print(f"  commission  {com:10.0f} euros "
+              f"({TAUX_COMMISSION:.0%} de l'encaisse, hors modifications)", file=sys.stderr)
+        print(f"  clients     {sum(1 for r in rows if r.get('statut') == 'client'):10d}",
+              file=sys.stderr)
 
 
 def main():
@@ -202,6 +221,9 @@ def main():
             r[c] = anc.get(c, "") or ""
         if not r["statut"]:
             r["statut"] = STATUT_DEFAUT
+        enc = num(r.get("montant_encaisse"))
+        sans = (r.get("produit") or "").strip().lower() in SANS_COMMISSION
+        r["commission"] = "0" if (enc and sans) else (f"{enc * TAUX_COMMISSION:.0f}" if enc else "")
 
     # --- colonnes : ordre voulu d'abord, puis tout ajout futur, hors ignorees
     presentes = set()
@@ -224,8 +246,12 @@ def main():
             print(f"  {p}  ({len(sub)} lignes, {k:.0f} Ko)", file=sys.stderr)
 
     resume(rows)
-    print(f"\nStatuts autorises : {' | '.join(STATUTS)}", file=sys.stderr)
-    print(f"Canaux autorises  : {' | '.join(CANAUX)}", file=sys.stderr)
+    print(f"\nStatuts autorises   : {' | '.join(STATUTS)}", file=sys.stderr)
+    print(f"Canaux autorises    : {' | '.join(CANAUX)}", file=sys.stderr)
+    print(f"Produits autorises  : {' | '.join(PRODUITS)}", file=sys.stderr)
+    print(f"Livraison autorisee : {' | '.join(LIVRAISON)}", file=sys.stderr)
+    print(f"commission = montant_encaisse x {TAUX_COMMISSION:.0%}, sauf "
+          f"{'/'.join(sorted(SANS_COMMISSION))} (0 %). Recalculee a chaque export.", file=sys.stderr)
     print(f"Genere le {date.today().strftime('%d/%m/%Y')}", file=sys.stderr)
 
 
