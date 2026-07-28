@@ -139,19 +139,52 @@
   <div id="pgP">
     <div class="card" id="loader">
       <h2>Ouvre ton fichier CRM</h2>
-      <div class="grid g22" style="margin-top:10px">
+
+      <div style="margin-top:10px;padding:13px;border:1px solid #C6D8F8;background:#F4F8FE;border-radius:14px">
+        <h3 style="color:var(--acc2)">Depuis GitHub - le mode normal</h3>
+        <div class="grid g3" style="margin-top:7px">
+          <div><label class="f" for="ghRepo">Dépôt</label><input id="ghRepo" value="Romtaug/prospection-tournees"></div>
+          <div><label class="f" for="ghBranch">Branche</label><input id="ghBranch" value="main"></div>
+          <div><label class="f" for="ghPath">Fichier</label><input id="ghPath" value="crm/crm_tournees_controle.csv"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn primary" id="ghLoad">Charger depuis GitHub</button>
+          <select id="ghQuick" style="width:auto;min-width:260px">
+            <option value="crm/crm_tournees_controle.csv">crm_tournees_controle.csv</option>
+            <option value="crm/crm_tournees_livraison.csv">crm_tournees_livraison.csv</option>
+            <option value="crm/crm_tournees_reseaux.csv">crm_tournees_reseaux.csv</option>
+            <option value="crm/crm_tournees_cvc.csv">crm_tournees_cvc.csv</option>
+            <option value="crm/crm_tournees_maintenance.csv">crm_tournees_maintenance.csv</option>
+            <option value="crm/crm_tournees_securite.csv">crm_tournees_securite.csv</option>
+            <option value="crm/crm_tournees_proprete.csv">crm_tournees_proprete.csv</option>
+            <option value="crm/crm_tournees_environnement.csv">crm_tournees_environnement.csv</option>
+            <option value="crm/crm_tournees_depannage.csv">crm_tournees_depannage.csv</option>
+            <option value="crm/crm_tournees.csv">crm_tournees.csv (le fichier complet)</option>
+          </select>
+        </div>
+        <details style="margin-top:9px">
+          <summary style="cursor:pointer;font-size:.8rem;font-weight:600;color:var(--acc)">Écrire directement dans GitHub (jeton requis)</summary>
+          <div style="margin-top:7px">
+            <label class="f" for="ghTok">Jeton d'accès personnel</label>
+            <input id="ghTok" type="password" placeholder="github_pat_..." autocomplete="off">
+            <div class="note">Le jeton reste en mémoire dans ton navigateur, il n'est ni enregistré ni transmis
+            ailleurs qu'à GitHub. Il disparaît quand tu fermes l'onglet. À créer sur
+            <b>github.com > Settings > Developer settings > Personal access tokens > Fine-grained tokens</b>,
+            limité à ce seul dépôt, avec l'autorisation <b>Contents : Read and write</b>.</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="grid g22" style="margin-top:11px">
         <div>
-          <button class="btn primary" id="open" style="width:100%;padding:14px">Ouvrir crm_tournees.csv en écriture directe</button>
-          <p class="note"><b>Le mode recommandé.</b> Le fichier reste sur ton disque et chaque modification y est
-          écrite immédiatement, sans téléchargement. Chrome et Edge uniquement.</p>
-          <div id="nofs" class="warnb hide" style="margin-top:8px">Ton navigateur ne permet pas l'écriture directe.
-          Utilise Chrome ou Edge, ou passe par le glisser-déposer à droite (mode téléchargement).</div>
+          <button class="btn" id="open" style="width:100%;padding:12px">Ouvrir un fichier local en écriture directe</button>
+          <p class="note">Pour travailler hors ligne sur une copie locale. Chrome, Edge et Opera uniquement.</p>
+          <div id="nofs" class="warnb hide" style="margin-top:8px">Ton navigateur ne permet pas l'écriture directe dans un fichier local.</div>
         </div>
         <div>
           <div class="drop" id="drop" tabindex="0" role="button" aria-label="Charger le fichier CRM">
-            <b style="font-size:.9rem">Mode lecture seule</b>
-            <p class="note">Glisse le CSV ici, ou clique. Tes modifications devront être téléchargées puis
-            remises dans le repo à la main.</p>
+            <b style="font-size:.86rem">Glisser-déposer</b>
+            <p class="note">Dépose un CSV, ou clique. Modifications à télécharger ensuite.</p>
             <input type="file" id="file" accept=".csv,text/csv" class="hide">
           </div>
         </div>
@@ -189,9 +222,10 @@
       <div class="bar">
         <span style="font-size:.81rem" id="state"></span>
         <div class="row">
-          <button class="btn sm" id="reload">Recharger depuis le fichier</button>
+          <button class="btn primary sm hide" id="ghSave">Enregistrer dans GitHub</button>
+          <button class="btn sm" id="reload">Recharger</button>
           <button class="btn sm" id="close">Fermer</button>
-          <button class="btn primary sm" id="dl">Télécharger une copie</button>
+          <button class="btn sm" id="dl">Télécharger une copie</button>
         </div>
       </div>
     </div>
@@ -539,6 +573,9 @@ function toCSV(cols,data){
 
 /* ====================== état et sauvegarde ====================== */
 let COLS=[], DATA=[], VIEW=[], CUR=null, FH=null, FNAME="", DIRTY=0, SAVING=false, LAST=null, ERR="", T=null;
+let GH=null;          // {repo, branch, path, sha} quand la source est GitHub
+const b64 = s => { const o=new TextEncoder().encode(s); let x=""; o.forEach(c=>x+=String.fromCharCode(c)); return btoa(x); };
+const ghTok = () => ($("ghTok").value||"").trim();
 const canFS = typeof window.showOpenFilePicker === "function";
 const secure = ["localhost","127.0.0.1"].includes(location.hostname) || location.protocol === "https:";
 if(!canFS){
@@ -562,7 +599,7 @@ $("open").onclick = async () => {
       types:[{description:"CSV",accept:{"text/csv":[".csv"],"text/plain":[".csv"]}}]});
     if(!await ensureRW(h)){ info("Permission d'écriture refusée. Réessaie et accepte, ou utilise le glisser-déposer.", true); return; }
     const f = await h.getFile();
-    if(load(await f.text(), f.name)) FH = h;
+    if(load(await f.text(), f.name)){ FH = h; GH = null; paint(); }
   }catch(e){ if(e.name!=="AbortError") info("Écriture directe indisponible ("+e.message
     +"). C'est normal si tu as ouvert ce fichier par double-clic : l'API exige HTTPS ou localhost. "
     +"Ouvre cette page depuis son adresse en ligne (https://romtaug.github.io/prospection-tournees/) "
@@ -570,8 +607,8 @@ $("open").onclick = async () => {
 };
 function touch(){
   DIRTY++;
-  if(FH){ clearTimeout(T); T = setTimeout(save, 600); }
-  paint(); kpi();
+  if(FH){ clearTimeout(T); T = setTimeout(save, 600); }   // fichier local : sauvegarde automatique
+  paint(); kpi();                                          // GitHub : envoi groupe via le bouton
 }
 async function save(){
   if(!FH || SAVING) return;
@@ -585,12 +622,81 @@ async function save(){
   SAVING = false; paint();
 }
 function paint(){
-  const h = SAVING ? '<span class="dot bz"></span>Enregistrement...'
-    : ERR ? '<span class="dot off"></span><span style="color:var(--bad)">Échec : '+esc(ERR)+'. Télécharge une copie.</span>'
-    : FH ? '<span class="dot on"></span>Connecté à <b>'+esc(FNAME)+'</b>'+(LAST?' · enregistré à '+LAST.toLocaleTimeString("fr-FR"):'')
-    : '<span class="dot off"></span>Mode lecture seule · <b>'+DIRTY+'</b> modification(s) à télécharger';
+  let h;
+  if(SAVING) h = '<span class="dot bz"></span>Enregistrement...';
+  else if(ERR) h = '<span class="dot off"></span><span style="color:var(--bad)">Échec : '+esc(ERR)+'</span>';
+  else if(FH) h = '<span class="dot on"></span>Fichier local <b>'+esc(FNAME)+'</b>'+(LAST?' · enregistré à '+LAST.toLocaleTimeString("fr-FR"):'');
+  else if(GH) h = '<span class="dot '+(DIRTY?'bz':'on')+'"></span>GitHub · <b>'+esc(GH.path)+'</b>'
+      +(DIRTY?' · <b>'+DIRTY+'</b> modification(s) à enregistrer':'')
+      +(LAST?' · enregistré à '+LAST.toLocaleTimeString("fr-FR"):'');
+  else h = '<span class="dot off"></span>Lecture seule · <b>'+DIRTY+'</b> modification(s) à télécharger';
   $("state").innerHTML = h;
+  const btn = $("ghSave");
+  btn.classList.toggle("hide", !GH);
+  btn.disabled = !GH || !DIRTY || SAVING;
+  btn.textContent = ghTok() ? "Enregistrer dans GitHub" : "Enregistrer dans GitHub (jeton requis)";
 }
+
+/* ---- GitHub : lecture (publique, sans jeton) ---- */
+$("ghQuick").onchange = () => { $("ghPath").value = $("ghQuick").value; };
+$("ghLoad").onclick = async () => {
+  const repo = ($("ghRepo").value||"").trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/$/,"");
+  const br = ($("ghBranch").value||"main").trim(), p = ($("ghPath").value||"").trim().replace(/^\//,"");
+  if(!repo.includes("/") || !p){ info("Renseigne le dépôt (proprietaire/nom) et le chemin du fichier.", true); return; }
+  info("Chargement depuis GitHub...");
+  try{
+    const url = "https://raw.githubusercontent.com/"+repo+"/"+br+"/"+p+"?t="+Date.now();
+    const hd = ghTok() ? {Authorization:"Bearer "+ghTok()} : {};
+    const r = await fetch(url, {headers:hd, cache:"no-store"});
+    if(r.status === 404) throw new Error("fichier introuvable. Lance d'abord le workflow \"CRM prospection\" pour créer le dossier crm/.");
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const txt = await r.text();
+    if(!load(txt, p.split("/").pop())) return;
+    FH = null; GH = {repo, branch:br, path:p, sha:null};
+    await ghSha();
+    info("Chargé depuis GitHub : <b>"+esc(repo)+"</b> / "+esc(p)+" ("+nb(DATA.length)+" prospects)."
+      + (ghTok() ? " Jeton détecté : tu peux enregistrer dans GitHub." : " Sans jeton, l'enregistrement se fait par téléchargement."));
+    paint();
+  }catch(e){ info("Chargement impossible : "+e.message, true); }
+};
+async function ghSha(){
+  if(!GH) return;
+  try{
+    const hd = {Accept:"application/vnd.github+json"};
+    if(ghTok()) hd.Authorization = "Bearer "+ghTok();
+    const r = await fetch("https://api.github.com/repos/"+GH.repo+"/contents/"+GH.path+"?ref="+GH.branch, {headers:hd, cache:"no-store"});
+    if(r.ok){ GH.sha = (await r.json()).sha; }
+  }catch(e){ /* pas bloquant : la premiere ecriture recuperera le sha */ }
+}
+/* ---- GitHub : ecriture (jeton requis) ---- */
+$("ghSave").onclick = async () => {
+  if(!GH) return;
+  if(!ghTok()){
+    info("Pour écrire dans GitHub il faut un jeton. Déplie \"Écrire directement dans GitHub\" dans le bloc de chargement, "
+      + "ou clique \"Télécharger une copie\" et remets le fichier dans le dépôt à la main.", true);
+    return;
+  }
+  SAVING = true; ERR = ""; paint();
+  try{
+    if(!GH.sha) await ghSha();
+    const hd = {Accept:"application/vnd.github+json", Authorization:"Bearer "+ghTok(), "Content-Type":"application/json"};
+    const put = () => fetch("https://api.github.com/repos/"+GH.repo+"/contents/"+GH.path, {method:"PUT", headers:hd,
+      body: JSON.stringify({message:"CRM : "+DIRTY+" mise(s) a jour depuis le cockpit", content:b64("\uFEFF"+toCSV(COLS,DATA)),
+        sha: GH.sha || undefined, branch: GH.branch})});
+    let r = await put();
+    if(r.status === 409 || r.status === 422){        // quelqu'un a modifie le fichier entre-temps
+      await ghSha();
+      if(!confirm("Le fichier a changé sur GitHub depuis ton chargement (quelqu'un d'autre a enregistré).\n\n"
+        + "OK = écraser avec ta version. Annuler = ne rien faire et recharger d'abord.")) { SAVING=false; paint(); return; }
+      r = await put();
+    }
+    if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error("HTTP "+r.status+" "+(j.message||"")); }
+    GH.sha = (await r.json()).content.sha;
+    DIRTY = 0; LAST = new Date();
+    info("Enregistré dans GitHub : "+esc(GH.path)+" à "+LAST.toLocaleTimeString("fr-FR")+".");
+  }catch(e){ ERR = e.message; }
+  SAVING = false; paint();
+};
 function info(t, bad){ $("loadinfo").innerHTML = bad ? '<span style="color:var(--bad)">'+esc(t)+'</span>' : t; }
 
 /* ---- glisser-deposer (mode lecture seule) ---- */
@@ -604,7 +710,7 @@ file.onchange = e => { const f=e.target.files[0]; if(f) readFile(f); };
 function readFile(f){
   const r = new FileReader();
   r.onerror = () => info("Lecture impossible.", true);
-  r.onload = () => { if(load(r.result, f.name)) FH = null; };
+  r.onload = () => { if(load(r.result, f.name)){ FH = null; GH = null; paint(); } };
   r.readAsText(f,"utf-8");
 }
 
@@ -776,7 +882,9 @@ function fiche(){
     if(TOUCHE(r.statut) && !r.date_contact){ r.date_contact = today(); $("eDc").value = r.date_contact; }
     if(r.statut === "client" && !r.date_vente && r.montant_vendu){ r.date_vente = today(); $("eDv").value = r.date_vente; }
     touch(); commLive(); refresh();
-    $("saved").textContent = FH ? "Écrit dans le fichier." : "En mémoire : télécharge la copie avant de fermer.";
+    $("saved").textContent = FH ? "Écrit dans le fichier."
+      : GH ? "Enregistré en mémoire : clique \"Enregistrer dans GitHub\" en bas."
+      : "En mémoire : télécharge la copie avant de fermer.";
   };
   $("apply").onclick = applyRow;
   ids.forEach(i => $(i).addEventListener("change", applyRow));
@@ -791,17 +899,19 @@ $("dl").onclick = () => {
   if(!FH){ DIRTY = 0; paint(); }
 };
 $("reload").onclick = async () => {
-  if(!FH){ info("Rechargement possible uniquement en écriture directe. Reprends le fichier.", true); return; }
   if(DIRTY && !confirm("Il reste "+DIRTY+" modification(s) non enregistrée(s). Recharger quand même ?")) return;
-  const f = await FH.getFile(); const h = FH; if(load(await f.text(), f.name)) FH = h;
+  if(GH){ $("ghLoad").click(); return; }
+  if(!FH){ info("Rien à recharger : reprends le fichier.", true); return; }
+  const f = await FH.getFile(); const h = FH; if(load(await f.text(), f.name)){ FH = h; paint(); }
 };
 $("close").onclick = () => {
   if(DIRTY && !FH && !confirm("Il reste "+DIRTY+" modification(s) non téléchargée(s). Fermer quand même ?")) return;
-  DATA=[]; COLS=[]; CUR=null; FH=null; DIRTY=0; LAST=null;
+  DATA=[]; COLS=[]; CUR=null; FH=null; GH=null; DIRTY=0; LAST=null;
   $("work").classList.add("hide"); $("kBody").classList.add("hide"); $("kEmpty").classList.remove("hide");
   info(""); file.value="";
 };
 window.addEventListener("beforeunload", e => { if(DIRTY && !FH){ e.preventDefault(); e.returnValue=""; } });
+$("ghTok").addEventListener("input", paint);
 
 /* ====================== tableau de bord ====================== */
 function kpi(){
