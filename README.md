@@ -43,7 +43,10 @@ Verification faite sur le depot github.com/annuaire-entreprises-data-gouv-fr/sea
   par NAF des departements volumineux ;
 - les 34 codes NAF et les 7 tranches d'effectifs de `config.yml` sont tous
   valides contre les listes officielles embarquees dans l'API (un code invalide
-  ferait echouer la requete en erreur 422).
+  ferait echouer la requete en erreur 422) ;
+- l'API ne renvoie PAS de libelle d'activite dans sa reponse de recherche : le
+  libelle est donc rempli localement depuis le code NAF (`NAF_LABELS` dans
+  `common.py`, libelles officiels de la nomenclature).
 
 ## Donnees produites (56 colonnes)
 
