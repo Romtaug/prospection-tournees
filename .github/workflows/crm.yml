@@ -64,6 +64,7 @@ jobs:
 
       - name: Generer le CRM
         run: |
+          mkdir -p crm          # la redirection du resume exige que le dossier existe deja
           python export_crm.py --par-type --out crm/crm_tournees.csv \
             ${{ inputs.types     && format('--types {0}', inputs.types) || '' }} \
             ${{ inputs.tier      && format('--tier {0}', inputs.tier) || '' }} \
