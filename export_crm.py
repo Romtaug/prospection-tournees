@@ -9,6 +9,9 @@ Prend la base enrichie et en fait un fichier de travail commercial :
    montant_encaisse, commission, statut_livraison) ;
  - remet les colonnes dans un ordre utile (identite, priorite, suivi, contact,
    liens, firmographie, identifiants) au lieu de l'ordre technique ;
+ - contient TOUTE la base : les lignes fichees avec leurs donnees, les autres
+   en attente avec les colonnes vides (option --enrichies-seulement pour ne
+   garder que le fiche) ;
  - trie par score decroissant : les meilleures lignes en haut ;
  - CONSERVE le suivi deja saisi. Le script relit le CRM existant et reapplique
    statut, dates, canal et notes par SIREN. Tes annotations ne sont jamais
@@ -61,24 +64,67 @@ ORDRE = (["nom", "tier", "score"] + SUIVI_COLS +
 IGNOREES = {"finess"}          # colonne heritee, toujours vide ici
 
 
-def trouver_base(chemin):
-    """Localise la base : argument explicite, sinon enrichie (csv/gz), sinon brute."""
-    if chemin:
-        if not os.path.exists(chemin):
-            sys.exit(f"Introuvable : {chemin}")
-        return chemin
-    for c in ("data/base_tournees_enrichi.csv", "data/base_tournees_enrichi.csv.gz",
-              "base_tournees_enrichi.csv", "data/base_tournees.csv", "base_tournees.csv"):
-        if os.path.exists(c):
-            return c
-    sys.exit("Aucune base trouvee. Lance d'abord 'Build base tournees', "
-             "puis 'Enrichissement base tournees'.")
-
-
 def lire(chemin):
     op = gzip.open if chemin.endswith(".gz") else open
     with op(chemin, "rt", encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
+
+
+def premier_existant(*chemins):
+    for c in chemins:
+        if os.path.exists(c):
+            return c
+    return None
+
+
+def charger(inp, enrichies_seulement=False):
+    """Renvoie (lignes, description de la source).
+
+    Par defaut le CRM contient TOUTE la base : les lignes deja fichees le sont
+    avec leurs donnees, les autres attendent leur tour avec les colonnes vides.
+    C'est ce qu'on veut d'un fichier de prospection : le commercial voit
+    l'ensemble du marche, pas seulement la part que le pipeline a traitee.
+
+    --in force une source unique. --enrichies-seulement ne garde que le fiche.
+    """
+    if inp:
+        if not os.path.exists(inp):
+            sys.exit(f"Introuvable : {inp}")
+        return lire(inp), inp
+
+    brute = premier_existant("data/base_tournees.csv", "base_tournees.csv")
+    enrichie = premier_existant("data/base_tournees_enrichi.csv",
+                                "data/base_tournees_enrichi.csv.gz",
+                                "base_tournees_enrichi.csv")
+    if not brute and not enrichie:
+        sys.exit("Aucune base trouvee. Lance d'abord 'Build base tournees', "
+                 "puis 'Enrichissement base tournees'.")
+    if enrichies_seulement:
+        if not enrichie:
+            sys.exit("Aucune base enrichie : lance 'Enrichissement base tournees'.")
+        return lire(enrichie), enrichie
+    if not enrichie:
+        return lire(brute), brute
+    if not brute:
+        return lire(enrichie), enrichie
+
+    rows_e = lire(enrichie)
+    par_siren = {}
+    for r in rows_e:
+        si = (r.get("siren") or "").strip()
+        if si:
+            par_siren[si] = r
+    out, fusion = [], 0
+    for r in lire(brute):
+        e = par_siren.pop((r.get("siren") or "").strip(), None)
+        if e:
+            r.update({k: v for k, v in e.items() if v not in (None, "")})
+            fusion += 1
+        out.append(r)
+    out.extend(par_siren.values())      # lignes enrichies absentes de la base brute
+    print(f"Fusion : {len(out)} lignes au total, dont {fusion} deja fichees "
+          f"({100 * fusion / max(1, len(out)):.0f} %)", file=sys.stderr)
+    return out, f"{brute} + {enrichie}"
 
 
 def relire_suivi(chemins):
@@ -135,11 +181,12 @@ def resume(rows):
         return sum(1 for r in rows if f(r))
     fiche = cnt(lambda r: r.get("date_enrichi"))
     mail = cnt(lambda r: r.get("email"))
+    tel = cnt(lambda r: r.get("telephone"))
     print(f"\n--- CRM : {n} lignes ---", file=sys.stderr)
     print(f"  fichees            {fiche:6d}  ({100*fiche/n:.1f}%)", file=sys.stderr)
     print(f"  avec email         {mail:6d}  ({100*mail/n:.1f}%)", file=sys.stderr)
     print(f"  email verifie MX   {cnt(lambda r: r.get('email_status')=='mx_ok'):6d}", file=sys.stderr)
-    print(f"  avec telephone     {cnt(lambda r: r.get('telephone')):6d}", file=sys.stderr)
+    print(f"  avec telephone     {tel:6d}  ({100*tel/n:.1f}%)", file=sys.stderr)
     print(f"  multi-agences      {cnt(lambda r: num(r.get('nb_etablissements_ouverts'))>=2):6d}", file=sys.stderr)
     for t in ("A", "B", "C"):
         c = cnt(lambda r, t=t: (r.get("tier") or "").upper() == t)
@@ -177,16 +224,21 @@ def main():
                     help="Ecrit aussi un CSV par metier a cote du fichier principal.")
     ap.add_argument("--sans-fusion", action="store_true",
                     help="Ignorer le suivi deja saisi (repart de zero).")
+    ap.add_argument("--enrichies-seulement", action="store_true",
+                    help="Ne garder que les lignes deja fichees (par defaut : toute la base).")
     a = ap.parse_args()
 
-    src = trouver_base(a.inp)
-    rows = lire(src)
+    rows, src = charger(a.inp, a.enrichies_seulement)
     if not rows:
         sys.exit(f"{src} est vide.")
     print(f"Source : {src} ({len(rows)} lignes)", file=sys.stderr)
-    if not any(r.get("date_enrichi") for r in rows):
-        print("! Base non enrichie : contact, finances, score et liens seront vides.",
+    fiche = sum(1 for r in rows if r.get("date_enrichi"))
+    if not fiche:
+        print("! Aucune ligne enrichie : contact, finances, score et liens seront vides.",
               file=sys.stderr)
+    elif fiche < len(rows):
+        print(f"  {len(rows) - fiche} lignes encore en attente d'enrichissement "
+              f"(elles apparaissent avec les colonnes vides).", file=sys.stderr)
 
     # --- filtres
     if a.types:
