@@ -1,0 +1,15 @@
+# Site statique + une fonction d'ecriture. Aucune construction.
+[build]
+  publish = "."
+  command = ""
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Le CSV et le HTML ne doivent jamais etre servis depuis le cache.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
