@@ -264,8 +264,11 @@ def main():
 
     # --- suivi : on relit le CRM principal et les eventuels CRM par metier
     base_out = os.path.splitext(a.out)[0]
-    candidats = [a.out] + [f"{base_out}_{t}.csv"
-                           for t in {(r.get("type") or "") for r in rows} if t]
+    dossier = os.path.dirname(a.out) or "."
+    # Le CRM en ligne ecrit son suivi dans un petit fichier separe : on le relit en
+    # priorite, c'est la source la plus fraiche.
+    candidats = [os.path.join(dossier, "suivi.csv"), a.out]
+    candidats += [f"{base_out}_{t}.csv" for t in {(r.get("type") or "") for r in rows} if t]
     suivi = {} if a.sans_fusion else relire_suivi(candidats)
     for r in rows:
         anc = suivi.get((r.get("siren") or "").strip(), {})
