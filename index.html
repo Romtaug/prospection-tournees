@@ -162,17 +162,26 @@
             <option value="crm/crm_tournees.csv">crm_tournees.csv (le fichier complet)</option>
           </select>
         </div>
-        <details style="margin-top:9px">
-          <summary style="cursor:pointer;font-size:.8rem;font-weight:600;color:var(--acc)">Écrire directement dans GitHub (jeton requis)</summary>
-          <div style="margin-top:7px">
-            <label class="f" for="ghTok">Jeton d'accès personnel</label>
-            <input id="ghTok" type="password" placeholder="github_pat_..." autocomplete="off">
-            <div class="note">Le jeton reste en mémoire dans ton navigateur, il n'est ni enregistré ni transmis
-            ailleurs qu'à GitHub. Il disparaît quand tu fermes l'onglet. À créer sur
-            <b>github.com > Settings > Developer settings > Personal access tokens > Fine-grained tokens</b>,
-            limité à ce seul dépôt, avec l'autorisation <b>Contents : Read and write</b>.</div>
+        <div class="grid g22" style="margin-top:10px">
+          <div>
+            <label class="f" for="ghCode">Code d'accès (pour enregistrer)</label>
+            <input id="ghCode" type="password" placeholder="le code fourni par Romain" autocomplete="off">
+            <div class="note">C'est tout ce dont tu as besoin pour écrire dans le CRM. Le jeton GitHub est rangé
+            côté serveur, personne ne le voit.</div>
           </div>
-        </details>
+          <div>
+            <details>
+              <summary style="cursor:pointer;font-size:.8rem;font-weight:600;color:var(--acc)">Mode expert : jeton GitHub</summary>
+              <div style="margin-top:7px">
+                <label class="f" for="ghTok">Jeton d'accès personnel</label>
+                <input id="ghTok" type="password" placeholder="github_pat_..." autocomplete="off">
+                <div class="note">À n'utiliser que sans la fonction d'écriture (par exemple sur GitHub Pages).
+                Le jeton reste en mémoire et disparaît à la fermeture de l'onglet. Fine-grained token limité à ce
+                dépôt, autorisation <b>Contents : Read and write</b>.</div>
+              </div>
+            </details>
+          </div>
+        </div>
       </div>
 
       <div class="grid g22" style="margin-top:11px">
@@ -576,6 +585,9 @@ let COLS=[], DATA=[], VIEW=[], CUR=null, FH=null, FNAME="", DIRTY=0, SAVING=fals
 let GH=null;          // {repo, branch, path, sha} quand la source est GitHub
 const b64 = s => { const o=new TextEncoder().encode(s); let x=""; o.forEach(c=>x+=String.fromCharCode(c)); return btoa(x); };
 const ghTok = () => ($("ghTok").value||"").trim();
+const ghCode = () => ($("ghCode").value||"").trim();
+const API_SAVE = "/api/crm-save";     // fonction Netlify : le jeton reste cote serveur
+let VIA_FN = null;                    // null = pas encore teste, true/false ensuite
 const canFS = typeof window.showOpenFilePicker === "function";
 const secure = ["localhost","127.0.0.1"].includes(location.hostname) || location.protocol === "https:";
 if(!canFS){
@@ -634,7 +646,7 @@ function paint(){
   const btn = $("ghSave");
   btn.classList.toggle("hide", !GH);
   btn.disabled = !GH || !DIRTY || SAVING;
-  btn.textContent = ghTok() ? "Enregistrer dans GitHub" : "Enregistrer dans GitHub (jeton requis)";
+  btn.textContent = (ghCode() || ghTok()) ? "Enregistrer dans GitHub" : "Enregistrer dans GitHub (code requis)";
 }
 
 /* ---- GitHub : lecture (publique, sans jeton) ---- */
@@ -655,7 +667,7 @@ $("ghLoad").onclick = async () => {
     FH = null; GH = {repo, branch:br, path:p, sha:null};
     await ghSha();
     info("Chargé depuis GitHub : <b>"+esc(repo)+"</b> / "+esc(p)+" ("+nb(DATA.length)+" prospects)."
-      + (ghTok() ? " Jeton détecté : tu peux enregistrer dans GitHub." : " Sans jeton, l'enregistrement se fait par téléchargement."));
+      + ((ghCode()||ghTok()) ? " Tu peux enregistrer dans GitHub." : " Sans code d'accès, l'enregistrement se fait par téléchargement."));
     paint();
   }catch(e){ info("Chargement impossible : "+e.message, true); }
 };
@@ -669,31 +681,64 @@ async function ghSha(){
   }catch(e){ /* pas bloquant : la premiere ecriture recuperera le sha */ }
 }
 /* ---- GitHub : ecriture (jeton requis) ---- */
+/* Deux chemins d'ecriture :
+   1. la fonction Netlify (recommande) : le cockpit n'envoie qu'un code d'acces,
+      le jeton GitHub reste dans les variables d'environnement du serveur ;
+   2. l'API GitHub en direct, avec un jeton colle a la main (mode expert,
+      utile si le site est servi par GitHub Pages sans fonction). */
+async function saveViaFonction(msg){
+  const r = await fetch(API_SAVE, {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({code:ghCode(), path:GH.path, content:toCSV(COLS,DATA), sha:GH.sha, message:msg})});
+  if(r.status === 404){ VIA_FN = false; return {absent:true}; }
+  VIA_FN = true;
+  let j = {};
+  try{ j = await r.json(); }catch{ throw new Error("réponse illisible du serveur (HTTP "+r.status+")"); }
+  if(j.conflict) return {conflit:true, msg:j.error};
+  if(!j.ok) throw new Error(j.error || ("HTTP "+r.status));
+  return {sha:j.sha};
+}
+async function saveViaJeton(msg){
+  if(!GH.sha) await ghSha();
+  const hd = {Accept:"application/vnd.github+json", Authorization:"Bearer "+ghTok(), "Content-Type":"application/json"};
+  const r = await fetch("https://api.github.com/repos/"+GH.repo+"/contents/"+GH.path, {method:"PUT", headers:hd,
+    body: JSON.stringify({message:msg, content:b64("\uFEFF"+toCSV(COLS,DATA)),
+      sha: GH.sha || undefined, branch: GH.branch})});
+  if(r.status === 409 || r.status === 422) return {conflit:true, msg:"Le fichier a changé sur GitHub depuis ton chargement."};
+  if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error("HTTP "+r.status+" "+(j.message||"")); }
+  return {sha:(await r.json()).content.sha};
+}
+
 $("ghSave").onclick = async () => {
   if(!GH) return;
-  if(!ghTok()){
-    info("Pour écrire dans GitHub il faut un jeton. Déplie \"Écrire directement dans GitHub\" dans le bloc de chargement, "
-      + "ou clique \"Télécharger une copie\" et remets le fichier dans le dépôt à la main.", true);
+  if(!ghCode() && !ghTok()){
+    info("Pour enregistrer, saisis le code d'accès dans le bloc de chargement. "
+      + "Sinon clique \"Télécharger une copie\" et remets le fichier dans le dépôt à la main.", true);
     return;
   }
+  const msg = "CRM : "+DIRTY+" mise(s) a jour depuis le cockpit";
   SAVING = true; ERR = ""; paint();
   try{
-    if(!GH.sha) await ghSha();
-    const hd = {Accept:"application/vnd.github+json", Authorization:"Bearer "+ghTok(), "Content-Type":"application/json"};
-    const put = () => fetch("https://api.github.com/repos/"+GH.repo+"/contents/"+GH.path, {method:"PUT", headers:hd,
-      body: JSON.stringify({message:"CRM : "+DIRTY+" mise(s) a jour depuis le cockpit", content:b64("\uFEFF"+toCSV(COLS,DATA)),
-        sha: GH.sha || undefined, branch: GH.branch})});
-    let r = await put();
-    if(r.status === 409 || r.status === 422){        // quelqu'un a modifie le fichier entre-temps
-      await ghSha();
-      if(!confirm("Le fichier a changé sur GitHub depuis ton chargement (quelqu'un d'autre a enregistré).\n\n"
-        + "OK = écraser avec ta version. Annuler = ne rien faire et recharger d'abord.")) { SAVING=false; paint(); return; }
-      r = await put();
+    let res;
+    if(ghCode() && VIA_FN !== false){
+      res = await saveViaFonction(msg);
+      if(res.absent){
+        if(!ghTok()) throw new Error("la fonction d'écriture n'est pas déployée sur ce site. "
+          + "Utilise le mode expert avec un jeton GitHub, ou ouvre le cockpit depuis l'adresse Netlify.");
+        res = await saveViaJeton(msg);
+      }
+    } else {
+      res = await saveViaJeton(msg);
     }
-    if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error("HTTP "+r.status+" "+(j.message||"")); }
-    GH.sha = (await r.json()).content.sha;
+    if(res.conflit){
+      await ghSha();
+      if(!confirm((res.msg||"Le fichier a changé sur GitHub.")+"\n\nOK = recharger la version du dépôt "
+        + "(tes modifications non enregistrées seront perdues). Annuler = ne rien faire.")){ SAVING=false; paint(); return; }
+      SAVING = false; $("ghLoad").click(); return;
+    }
+    if(res.sha) GH.sha = res.sha;
     DIRTY = 0; LAST = new Date();
-    info("Enregistré dans GitHub : "+esc(GH.path)+" à "+LAST.toLocaleTimeString("fr-FR")+".");
+    info("Enregistré dans GitHub : "+esc(GH.path)+" à "+LAST.toLocaleTimeString("fr-FR")
+      + (VIA_FN ? " (via la fonction Netlify)." : " (via ton jeton)."));
   }catch(e){ ERR = e.message; }
   SAVING = false; paint();
 };
@@ -942,6 +987,7 @@ $("close").onclick = () => {
 };
 window.addEventListener("beforeunload", e => { if(DIRTY && !FH){ e.preventDefault(); e.returnValue=""; } });
 $("ghTok").addEventListener("input", paint);
+$("ghCode").addEventListener("input", paint);
 
 /* ====================== tableau de bord ====================== */
 function kpi(){
