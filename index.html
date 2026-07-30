@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cockpit tournees - Closer</title>
+<title>CRM tournees</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,8 +51,6 @@
   select.mini{padding:4px 6px;font-size:.75rem;border-radius:7px}
   textarea{resize:vertical;min-height:62px}
   label.f{display:block;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px}
-  .drop{border:2px dashed var(--line);border-radius:16px;padding:22px;text-align:center;background:var(--ink3);cursor:pointer}
-  .drop.hot{border-color:var(--acc);background:#EAF1FD}
   .badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
   .badge{font-family:var(--mono);font-size:.67rem;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.3px}
   .b-a{background:#E4F6EC;color:#12703F;border:1px solid #BFE6CF}
@@ -110,6 +108,12 @@
   details.panel[open]>summary::after{content:" ⌄"}
   details.panel .body{padding:0 15px 15px}
   .hide{display:none!important}
+  .gate{position:fixed;inset:0;z-index:100;background:rgba(22,34,46,.55);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:18px}
+  .gatebox{background:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:26px;
+    max-width:430px;width:100%;box-shadow:0 18px 50px rgba(16,24,40,.28)}
+  .gatebox h2{font-size:1.35rem;margin-bottom:4px}
+  .gatebox .sub{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:.4px;margin-bottom:16px}
   .funnel{display:grid;gap:5px;margin:10px 0}
   .fb{background:var(--acc);color:#fff;border-radius:8px;padding:6px 10px;font-size:.77rem;font-weight:600;
     display:flex;justify-content:space-between;min-width:148px}
@@ -121,10 +125,28 @@
 </style>
 </head>
 <body>
+<div class="gate" id="gate">
+  <div class="gatebox">
+    <h2>CRM tournées</h2>
+    <div class="sub">OPTIMISEUR DE TOURNÉES · ESPACE COMMERCIAL</div>
+    <p style="font-size:.86rem;color:var(--muted);margin-bottom:14px">
+      Saisis le code d'accès pour ouvrir le CRM et pouvoir enregistrer ton travail.</p>
+    <label class="f" for="gCode">Code d'accès</label>
+    <input id="gCode" type="password" autocomplete="off" placeholder="code fourni par Romain">
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="gGo" style="flex:1;padding:11px">Entrer</button>
+      <button class="btn" id="gSkip">Consulter sans enregistrer</button>
+    </div>
+    <div class="note" id="gErr"></div>
+    <div class="note" style="margin-top:12px">Le code sert uniquement à enregistrer dans GitHub.
+      Sans lui, tu peux consulter les fiches mais tes modifications ne seront pas sauvegardées.</div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <div class="top">
-    <div class="brand"><h1>Cockpit tournées</h1><span class="sub">OPTIMISEUR · BRIEF CLOSER</span></div>
+    <div class="brand"><h1>CRM tournées</h1><span class="sub">OPTIMISEUR DE TOURNÉES · ESPACE COMMERCIAL</span></div>
     <div class="tabs">
       <button class="tab on" data-pg="pgP">Prospects</button>
       <button class="tab" data-pg="pgK">Tableau de bord</button>
@@ -138,66 +160,40 @@
   <!-- ================= PROSPECTS ================= -->
   <div id="pgP">
     <div class="card" id="loader">
-      <h2>Ouvre ton fichier CRM</h2>
+      <h2>Ton fichier de prospection</h2>
 
-      <div style="margin-top:10px;padding:13px;border:1px solid #C6D8F8;background:#F4F8FE;border-radius:14px">
-        <h3 style="color:var(--acc2)">Depuis GitHub - le mode normal</h3>
-        <div class="grid g3" style="margin-top:7px">
-          <div><label class="f" for="ghRepo">Dépôt</label><input id="ghRepo" value="Romtaug/prospection-tournees"></div>
-          <div><label class="f" for="ghBranch">Branche</label><input id="ghBranch" value="main"></div>
-          <div><label class="f" for="ghPath">Fichier</label><input id="ghPath" value="crm/crm_tournees_controle.csv"></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button class="btn primary" id="ghLoad">Charger depuis GitHub</button>
-          <select id="ghQuick" style="width:auto;min-width:260px">
-            <option value="crm/crm_tournees_controle.csv">crm_tournees_controle.csv</option>
-            <option value="crm/crm_tournees_livraison.csv">crm_tournees_livraison.csv</option>
-            <option value="crm/crm_tournees_reseaux.csv">crm_tournees_reseaux.csv</option>
-            <option value="crm/crm_tournees_cvc.csv">crm_tournees_cvc.csv</option>
-            <option value="crm/crm_tournees_maintenance.csv">crm_tournees_maintenance.csv</option>
-            <option value="crm/crm_tournees_securite.csv">crm_tournees_securite.csv</option>
-            <option value="crm/crm_tournees_proprete.csv">crm_tournees_proprete.csv</option>
-            <option value="crm/crm_tournees_environnement.csv">crm_tournees_environnement.csv</option>
-            <option value="crm/crm_tournees_depannage.csv">crm_tournees_depannage.csv</option>
-            <option value="crm/crm_tournees.csv">crm_tournees.csv (le fichier complet)</option>
-          </select>
-        </div>
-        <div class="grid g22" style="margin-top:10px">
+      <div style="margin-top:10px;padding:14px;border:1px solid #C6D8F8;background:#F4F8FE;border-radius:14px">
+        <div class="row" style="justify-content:space-between">
           <div>
-            <label class="f" for="ghCode">Code d'accès (pour enregistrer)</label>
-            <input id="ghCode" type="password" placeholder="le code fourni par Romain" autocomplete="off">
-            <div class="note">C'est tout ce dont tu as besoin pour écrire dans le CRM. Le jeton GitHub est rangé
-            côté serveur, personne ne le voit.</div>
+            <div style="font-weight:700;font-size:.95rem">Toute la base : 28 125 entreprises</div>
+            <div class="note" style="margin-top:2px">Un seul fichier, <b>crm/crm_tournees.csv</b>.
+              Tu choisis ensuite ton métier, ton tier et ton département avec les filtres.</div>
           </div>
-          <div>
-            <details>
-              <summary style="cursor:pointer;font-size:.8rem;font-weight:600;color:var(--acc)">Mode expert : jeton GitHub</summary>
-              <div style="margin-top:7px">
-                <label class="f" for="ghTok">Jeton d'accès personnel</label>
-                <input id="ghTok" type="password" placeholder="github_pat_..." autocomplete="off">
-                <div class="note">À n'utiliser que sans la fonction d'écriture (par exemple sur GitHub Pages).
-                Le jeton reste en mémoire et disparaît à la fermeture de l'onglet. Fine-grained token limité à ce
-                dépôt, autorisation <b>Contents : Read and write</b>.</div>
-              </div>
-            </details>
-          </div>
+          <button class="btn primary" id="ghLoad" style="padding:12px 20px">Charger le CRM</button>
         </div>
+        <details style="margin-top:11px">
+          <summary style="cursor:pointer;font-size:.78rem;font-weight:600;color:var(--acc)">Réglages avancés</summary>
+          <div class="grid g3" style="margin-top:8px">
+            <div><label class="f" for="ghRepo">Dépôt</label><input id="ghRepo" value="Romtaug/prospection-tournees"></div>
+            <div><label class="f" for="ghBranch">Branche</label><input id="ghBranch" value="main"></div>
+            <div><label class="f" for="ghPath">Fichier</label><input id="ghPath" value="crm/crm_tournees.csv"></div>
+          </div>
+          <div class="grid g22" style="margin-top:9px">
+            <div>
+              <label class="f" for="ghCode">Code d'accès</label>
+              <input id="ghCode" type="password" autocomplete="off">
+              <div class="note">Déjà saisi à l'ouverture. Le jeton GitHub reste côté serveur, personne ne le voit.</div>
+            </div>
+            <div>
+              <label class="f" for="ghTok">Jeton GitHub (mode expert)</label>
+              <input id="ghTok" type="password" placeholder="github_pat_..." autocomplete="off">
+              <div class="note">Uniquement si la fonction d'enregistrement n'est pas déployée. Le jeton reste
+              en mémoire et disparaît à la fermeture de l'onglet.</div>
+            </div>
+          </div>
+        </details>
       </div>
 
-      <div class="grid g22" style="margin-top:11px">
-        <div>
-          <button class="btn" id="open" style="width:100%;padding:12px">Ouvrir un fichier local en écriture directe</button>
-          <p class="note">Pour travailler hors ligne sur une copie locale. Chrome, Edge et Opera uniquement.</p>
-          <div id="nofs" class="warnb hide" style="margin-top:8px">Ton navigateur ne permet pas l'écriture directe dans un fichier local.</div>
-        </div>
-        <div>
-          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Charger le fichier CRM">
-            <b style="font-size:.86rem">Glisser-déposer</b>
-            <p class="note">Dépose un CSV, ou clique. Modifications à télécharger ensuite.</p>
-            <input type="file" id="file" accept=".csv,text/csv" class="hide">
-          </div>
-        </div>
-      </div>
       <div class="note" id="loadinfo"></div>
     </div>
 
@@ -223,7 +219,8 @@
           <thead><tr><th>Entreprise</th><th>Tier</th><th>Score</th><th style="min-width:130px">Statut</th></tr></thead>
           <tbody id="tb"></tbody>
         </table></div>
-        <div class="note">Change le statut directement dans la liste : c'est écrit dans le fichier aussitôt.</div></div>
+        <div class="note">Change le statut directement dans la liste. Pense à cliquer
+        <b>Enregistrer mon travail</b> en bas quand tu as fini une série d'appels.</div></div>
         <div id="fiche"><div class="card"><h2>Sélectionne un prospect</h2>
           <p class="muted" style="font-size:.84rem">Clique sur un nom dans la liste pour voir sa fiche, ses liens et son suivi.</p></div></div>
       </div>
@@ -581,76 +578,37 @@ function toCSV(cols,data){
 }
 
 /* ====================== état et sauvegarde ====================== */
-let COLS=[], DATA=[], VIEW=[], CUR=null, FH=null, FNAME="", DIRTY=0, SAVING=false, LAST=null, ERR="", T=null;
-let GH=null;          // {repo, branch, path, sha} quand la source est GitHub
+let COLS=[], DATA=[], VIEW=[], CUR=null, FNAME="", DIRTY=0, SAVING=false, LAST=null, ERR="";
+let GH=null;          // {repo, branch, path} quand la source est GitHub
+const MODIF = new Set();   // SIREN des lignes modifiees depuis le dernier enregistrement
+const SUIVI_FICHIER = "crm/suivi.csv";
 const b64 = s => { const o=new TextEncoder().encode(s); let x=""; o.forEach(c=>x+=String.fromCharCode(c)); return btoa(x); };
 const ghTok = () => ($("ghTok").value||"").trim();
 const ghCode = () => ($("ghCode").value||"").trim();
 const API_SAVE = "/api/crm-save";     // fonction Netlify : le jeton reste cote serveur
 let VIA_FN = null;                    // null = pas encore teste, true/false ensuite
-const canFS = typeof window.showOpenFilePicker === "function";
-const secure = ["localhost","127.0.0.1"].includes(location.hostname) || location.protocol === "https:";
-if(!canFS){
-  $("open").disabled = true; $("nofs").classList.remove("hide");
-} else if(!secure){
-  $("nofs").classList.remove("hide");
-  $("nofs").innerHTML = "<b>Tu as ouvert un fichier local.</b> L'écriture directe exige une adresse en HTTPS : "
-    + "utilise <b>https://romtaug.github.io/prospection-tournees/</b>. Depuis un fichier local, seul le "
-    + "glisser-déposer fonctionne (avec téléchargement manuel du CSV).";
-}
-
-async function ensureRW(h){
-  if(!h.queryPermission) return true;
-  const o = {mode:"readwrite"};
-  if(await h.queryPermission(o) === "granted") return true;
-  return (await h.requestPermission(o)) === "granted";
-}
-$("open").onclick = async () => {
-  try{
-    const [h] = await window.showOpenFilePicker({multiple:false,
-      types:[{description:"CSV",accept:{"text/csv":[".csv"],"text/plain":[".csv"]}}]});
-    if(!await ensureRW(h)){ info("Permission d'écriture refusée. Réessaie et accepte, ou utilise le glisser-déposer.", true); return; }
-    const f = await h.getFile();
-    if(load(await f.text(), f.name)){ FH = h; GH = null; paint(); }
-  }catch(e){ if(e.name!=="AbortError") info("Écriture directe indisponible ("+e.message
-    +"). C'est normal si tu as ouvert ce fichier par double-clic : l'API exige HTTPS ou localhost. "
-    +"Ouvre cette page depuis son adresse en ligne (https://romtaug.github.io/prospection-tournees/) "
-    +"et non depuis un fichier local, ou utilise le glisser-déposer.", true); }
-};
-function touch(){
-  DIRTY++;
-  if(FH){ clearTimeout(T); T = setTimeout(save, 600); }   // fichier local : sauvegarde automatique
-  paint(); kpi();                                          // GitHub : envoi groupe via le bouton
-}
-async function save(){
-  if(!FH || SAVING) return;
-  SAVING = true; ERR = ""; paint();
-  try{
-    const w = await FH.createWritable();
-    await w.write("\uFEFF" + toCSV(COLS, DATA));
-    await w.close();
-    DIRTY = 0; LAST = new Date();
-  }catch(e){ ERR = e.message; }
-  SAVING = false; paint();
+function touch(r){
+  const si = (r && r.siren || "").trim();
+  if(si) MODIF.add(si);
+  DIRTY = MODIF.size;         // envoi groupe : on compte les lignes, pas les frappes
+  paint(); kpi();
 }
 function paint(){
   let h;
   if(SAVING) h = '<span class="dot bz"></span>Enregistrement...';
   else if(ERR) h = '<span class="dot off"></span><span style="color:var(--bad)">Échec : '+esc(ERR)+'</span>';
-  else if(FH) h = '<span class="dot on"></span>Fichier local <b>'+esc(FNAME)+'</b>'+(LAST?' · enregistré à '+LAST.toLocaleTimeString("fr-FR"):'');
   else if(GH) h = '<span class="dot '+(DIRTY?'bz':'on')+'"></span>GitHub · <b>'+esc(GH.path)+'</b>'
-      +(DIRTY?' · <b>'+DIRTY+'</b> modification(s) à enregistrer':'')
+      +(DIRTY?' · <b>'+DIRTY+'</b> ligne(s) modifiée(s), pense à enregistrer':'')
       +(LAST?' · enregistré à '+LAST.toLocaleTimeString("fr-FR"):'');
-  else h = '<span class="dot off"></span>Lecture seule · <b>'+DIRTY+'</b> modification(s) à télécharger';
+  else h = '<span class="dot off"></span>Aucun fichier chargé';
   $("state").innerHTML = h;
   const btn = $("ghSave");
   btn.classList.toggle("hide", !GH);
   btn.disabled = !GH || !DIRTY || SAVING;
-  btn.textContent = (ghCode() || ghTok()) ? "Enregistrer dans GitHub" : "Enregistrer dans GitHub (code requis)";
+  btn.textContent = (ghCode() || ghTok()) ? "Enregistrer mon travail" : "Enregistrer (code requis)";
 }
 
 /* ---- GitHub : lecture (publique, sans jeton) ---- */
-$("ghQuick").onchange = () => { $("ghPath").value = $("ghQuick").value; };
 $("ghLoad").onclick = async () => {
   const repo = ($("ghRepo").value||"").trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/$/,"");
   const br = ($("ghBranch").value||"main").trim(), p = ($("ghPath").value||"").trim().replace(/^\//,"");
@@ -664,13 +622,38 @@ $("ghLoad").onclick = async () => {
     if(!r.ok) throw new Error("HTTP "+r.status);
     const txt = await r.text();
     if(!load(txt, p.split("/").pop())) return;
-    FH = null; GH = {repo, branch:br, path:p, sha:null};
-    await ghSha();
-    info("Chargé depuis GitHub : <b>"+esc(repo)+"</b> / "+esc(p)+" ("+nb(DATA.length)+" prospects)."
-      + ((ghCode()||ghTok()) ? " Tu peux enregistrer dans GitHub." : " Sans code d'accès, l'enregistrement se fait par téléchargement."));
+    GH = {repo, branch:br, path:p};
+    MODIF.clear(); DIRTY = 0;
+    const n = await chargerSuivi(repo, br, hd);
+    info("Chargé : <b>"+nb(DATA.length)+"</b> prospects depuis "+esc(p)
+      + (n ? ", dont <b>"+nb(n)+"</b> avec un suivi déjà saisi" : "")
+      + ". " + ((ghCode()||ghTok()) ? "Tu peux enregistrer tes modifications."
+                                     : "Sans code d'accès, tes modifications ne seront pas enregistrées."));
     paint();
   }catch(e){ info("Chargement impossible : "+e.message, true); }
 };
+/* Le suivi commercial vit dans un petit fichier separe, ecrit par le CRM.
+   On le superpose au gros CRM : ses valeurs sont plus recentes que celles du
+   fichier genere par le pipeline. */
+async function chargerSuivi(repo, br, hd){
+  try{
+    const u = "https://raw.githubusercontent.com/"+repo+"/"+br+"/"+SUIVI_FICHIER+"?t="+Date.now();
+    const r = await fetch(u, {headers:hd, cache:"no-store"});
+    if(!r.ok) return 0;                       // pas encore de suivi : c'est normal
+    const {data} = parseCSV(await r.text());
+    const parSiren = new Map();
+    data.forEach(x => { const s=(x.siren||"").trim(); if(s) parSiren.set(s, x); });
+    let n = 0;
+    for(const row of DATA){
+      const s = (row.siren||"").trim(), maj = parSiren.get(s);
+      if(!maj) continue;
+      SUIVI.forEach(c => { if(maj[c]) row[c] = maj[c]; });
+      n++;
+    }
+    return n;
+  }catch(e){ return 0; }
+}
+
 async function ghSha(){
   if(!GH) return;
   try{
@@ -682,23 +665,36 @@ async function ghSha(){
 }
 /* ---- GitHub : ecriture (jeton requis) ---- */
 /* Deux chemins d'ecriture :
-   1. la fonction Netlify (recommande) : le cockpit n'envoie qu'un code d'acces,
+   1. la fonction Netlify (recommande) : le CRM n'envoie qu'un code d'acces,
       le jeton GitHub reste dans les variables d'environnement du serveur ;
    2. l'API GitHub en direct, avec un jeton colle a la main (mode expert,
       utile si le site est servi par GitHub Pages sans fonction). */
-async function saveViaFonction(msg){
+/* On n'envoie que les lignes touchees : quelques kilo-octets au lieu de plusieurs
+   mega-octets, et deux commerciaux peuvent enregistrer sans s'ecraser puisque la
+   fusion se fait cote serveur, dans la derniere version du fichier de suivi. */
+function lignesModifiees(){
+  const parSiren = new Map();
+  DATA.forEach(r => { const s=(r.siren||"").trim(); if(s && MODIF.has(s)) parSiren.set(s, r); });
+  return [...parSiren.values()].map(r => {
+    const o = {siren:r.siren, nom:r.nom||""};
+    SUIVI.forEach(c => o[c] = r[c] || "");
+    return o;
+  });
+}
+async function saveViaFonction(){
+  const updates = lignesModifiees();
+  if(!updates.length) return {rien:true};
   const r = await fetch(API_SAVE, {method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({code:ghCode(), path:GH.path, content:toCSV(COLS,DATA), sha:GH.sha, message:msg})});
+    body: JSON.stringify({code:ghCode(), updates})});
   if(r.status === 404){ VIA_FN = false; return {absent:true}; }
   VIA_FN = true;
   let j = {};
   try{ j = await r.json(); }catch{ throw new Error("réponse illisible du serveur (HTTP "+r.status+")"); }
-  if(j.conflict) return {conflit:true, msg:j.error};
   if(!j.ok) throw new Error(j.error || ("HTTP "+r.status));
-  return {sha:j.sha};
+  return {lignes:j.lignes};
 }
 async function saveViaJeton(msg){
-  if(!GH.sha) await ghSha();
+  await ghSha();
   const hd = {Accept:"application/vnd.github+json", Authorization:"Bearer "+ghTok(), "Content-Type":"application/json"};
   const r = await fetch("https://api.github.com/repos/"+GH.repo+"/contents/"+GH.path, {method:"PUT", headers:hd,
     body: JSON.stringify({message:msg, content:b64("\uFEFF"+toCSV(COLS,DATA)),
@@ -715,49 +711,34 @@ $("ghSave").onclick = async () => {
       + "Sinon clique \"Télécharger une copie\" et remets le fichier dans le dépôt à la main.", true);
     return;
   }
-  const msg = "CRM : "+DIRTY+" mise(s) a jour depuis le cockpit";
+  const msg = "CRM : "+DIRTY+" ligne(s) mise(s) a jour depuis le CRM en ligne";
   SAVING = true; ERR = ""; paint();
   try{
     let res;
     if(ghCode() && VIA_FN !== false){
-      res = await saveViaFonction(msg);
+      res = await saveViaFonction();
       if(res.absent){
-        if(!ghTok()) throw new Error("la fonction d'écriture n'est pas déployée sur ce site. "
-          + "Utilise le mode expert avec un jeton GitHub, ou ouvre le cockpit depuis l'adresse Netlify.");
+        if(!ghTok()) throw new Error("la fonction d'enregistrement n'est pas déployée sur ce site. "
+          + "Ouvre le CRM depuis l'adresse Netlify, ou saisis un jeton GitHub dans les réglages avancés.");
         res = await saveViaJeton(msg);
       }
     } else {
       res = await saveViaJeton(msg);
     }
     if(res.conflit){
-      await ghSha();
       if(!confirm((res.msg||"Le fichier a changé sur GitHub.")+"\n\nOK = recharger la version du dépôt "
         + "(tes modifications non enregistrées seront perdues). Annuler = ne rien faire.")){ SAVING=false; paint(); return; }
       SAVING = false; $("ghLoad").click(); return;
     }
-    if(res.sha) GH.sha = res.sha;
-    DIRTY = 0; LAST = new Date();
-    info("Enregistré dans GitHub : "+esc(GH.path)+" à "+LAST.toLocaleTimeString("fr-FR")
-      + (VIA_FN ? " (via la fonction Netlify)." : " (via ton jeton)."));
+    const n = DIRTY;
+    MODIF.clear(); DIRTY = 0; LAST = new Date();
+    info("Enregistré à "+LAST.toLocaleTimeString("fr-FR")+" : <b>"+nb(n)+"</b> ligne(s) "
+      + (VIA_FN ? "envoyées dans crm/suivi.csv (via la fonction Netlify)."
+                : "écrites dans le dépôt (via ton jeton)."));
   }catch(e){ ERR = e.message; }
   SAVING = false; paint();
 };
 function info(t, bad){ $("loadinfo").innerHTML = bad ? '<span style="color:var(--bad)">'+esc(t)+'</span>' : t; }
-
-/* ---- glisser-deposer (mode lecture seule) ---- */
-const drop = $("drop"), file = $("file");
-drop.onclick = () => file.click();
-drop.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); file.click(); } };
-["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("hot");}));
-["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("hot");}));
-drop.addEventListener("drop", e => { const f=e.dataTransfer.files[0]; if(f) readFile(f); });
-file.onchange = e => { const f=e.target.files[0]; if(f) readFile(f); };
-function readFile(f){
-  const r = new FileReader();
-  r.onerror = () => info("Lecture impossible.", true);
-  r.onload = () => { if(load(r.result, f.name)){ FH = null; GH = null; paint(); } };
-  r.readAsText(f,"utf-8");
-}
 
 function load(text, name){
   const {cols,data} = parseCSV(text);
@@ -822,7 +803,7 @@ function refresh(){
     const r = cap[+s.dataset.st];
     r.statut = s.value;
     if(TOUCHE(r.statut) && !r.date_contact) r.date_contact = today();
-    touch();
+    touch(r);
     if(CUR === r) fiche();
   });
 }
@@ -956,9 +937,8 @@ function fiche(){
     r.commission = e ? String(Math.round(sans?0:e*COMM)) : "";
     if(TOUCHE(r.statut) && !r.date_contact){ r.date_contact = today(); $("eDc").value = r.date_contact; }
     if(r.statut === "client" && !r.date_vente && r.montant_vendu){ r.date_vente = today(); $("eDv").value = r.date_vente; }
-    touch(); commLive(); refresh();
-    $("saved").textContent = FH ? "Écrit dans le fichier."
-      : GH ? "Enregistré en mémoire : clique \"Enregistrer dans GitHub\" en bas."
+    touch(r); commLive(); refresh();
+    $("saved").textContent = GH ? "Enregistré en mémoire : clique \"Enregistrer dans GitHub\" en bas."
       : "En mémoire : télécharge la copie avant de fermer.";
   };
   $("apply").onclick = applyRow;
@@ -971,21 +951,19 @@ $("dl").onclick = () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(b); a.download = FNAME||"crm_tournees.csv"; a.click();
   URL.revokeObjectURL(a.href);
-  if(!FH){ DIRTY = 0; paint(); }
 };
-$("reload").onclick = async () => {
+$("reload").onclick = () => {
   if(DIRTY && !confirm("Il reste "+DIRTY+" modification(s) non enregistrée(s). Recharger quand même ?")) return;
-  if(GH){ $("ghLoad").click(); return; }
-  if(!FH){ info("Rien à recharger : reprends le fichier.", true); return; }
-  const f = await FH.getFile(); const h = FH; if(load(await f.text(), f.name)){ FH = h; paint(); }
+  if(GH) $("ghLoad").click();
+  else info("Rien à recharger : charge d'abord un fichier depuis GitHub.", true);
 };
 $("close").onclick = () => {
-  if(DIRTY && !FH && !confirm("Il reste "+DIRTY+" modification(s) non téléchargée(s). Fermer quand même ?")) return;
-  DATA=[]; COLS=[]; CUR=null; FH=null; GH=null; DIRTY=0; LAST=null;
+  if(DIRTY && !confirm("Il reste "+DIRTY+" modification(s) non enregistrée(s). Fermer quand même ?")) return;
+  DATA=[]; COLS=[]; CUR=null; GH=null; DIRTY=0; LAST=null;
   $("work").classList.add("hide"); $("kBody").classList.add("hide"); $("kEmpty").classList.remove("hide");
-  info(""); file.value="";
+  info("");
 };
-window.addEventListener("beforeunload", e => { if(DIRTY && !FH){ e.preventDefault(); e.returnValue=""; } });
+window.addEventListener("beforeunload", e => { if(DIRTY){ e.preventDefault(); e.returnValue=""; } });
 $("ghTok").addEventListener("input", paint);
 $("ghCode").addEventListener("input", paint);
 
@@ -1096,6 +1074,22 @@ function simu(){
     ? '<div class="redb"><b>Plafond micro-entreprise dépassé.</b> '+eur(ca)+' de chiffre d\'affaires contre '+eur(PLAFOND)+' autorisés en prestations de services. À ce rythme il faut passer en société, ou monter le prix.</div>'
     : '<div class="okb">Dans le plafond micro-entreprise : '+eur(ca)+' sur '+eur(PLAFOND)+'. Marge restante : <b>'+eur(PLAFOND-ca)+'</b>, soit environ '+Math.floor((PLAFOND-ca)/PRIX)+' ventes.</div>';
 }
+
+/* ---- fenetre d'accueil : le code d'abord, puis chargement automatique ---- */
+function entrer(code){
+  $("ghCode").value = code || "";
+  $("gate").classList.add("hide");
+  paint();
+  $("ghLoad").click();
+}
+$("gGo").onclick = () => {
+  const c = ($("gCode").value || "").trim();
+  if(!c){ $("gErr").innerHTML = '<span style="color:var(--bad)">Saisis le code, ou clique "Consulter sans enregistrer".</span>'; return; }
+  entrer(c);
+};
+$("gSkip").onclick = () => entrer("");
+$("gCode").addEventListener("keydown", e => { if(e.key === "Enter") $("gGo").click(); });
+setTimeout(() => $("gCode").focus(), 150);
 
 roi(); scriptM(); simu(); paint();
 </script>
