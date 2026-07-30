@@ -1,21 +1,39 @@
-Source : data/base_tournees_enrichi.csv (4517 lignes)
+Fusion : 28125 lignes au total, dont 4517 deja fichees (16 %)
+Source : data/base_tournees.csv + data/base_tournees_enrichi.csv (28125 lignes)
+  23608 lignes encore en attente d'enrichissement (elles apparaissent avec les colonnes vides).
 
-CRM ecrit : crm/crm_tournees.csv  (4517 lignes, 67 colonnes, 3747 Ko)
-  crm/crm_tournees_livraison.csv  (4517 lignes, 3747 Ko)
+CRM ecrit : crm/crm_tournees.csv  (28125 lignes, 65 colonnes, 7190 Ko)
+  crm/crm_tournees_controle.csv  (724 lignes, 109 Ko)
+  crm/crm_tournees_cvc.csv  (4491 lignes, 633 Ko)
+  crm/crm_tournees_depannage.csv  (227 lignes, 34 Ko)
+  crm/crm_tournees_environnement.csv  (704 lignes, 115 Ko)
+  crm/crm_tournees_livraison.csv  (5862 lignes, 3936 Ko)
+  crm/crm_tournees_maintenance.csv  (1960 lignes, 296 Ko)
+  crm/crm_tournees_proprete.csv  (7399 lignes, 1083 Ko)
+  crm/crm_tournees_reseaux.csv  (4602 lignes, 669 Ko)
+  crm/crm_tournees_securite.csv  (2156 lignes, 321 Ko)
 
---- CRM : 4517 lignes ---
-  fichees              4517  (100.0%)
-  avec email            489  (10.8%)
+--- CRM : 28125 lignes ---
+  fichees              4517  (16.1%)
+  avec email            489  (1.7%)
   email verifie MX      475
-  avec telephone        454
+  avec telephone        454  (1.6%)
   multi-agences         750
   tier A                144
   tier B               1308
   tier C               3065
   par metier :
-    livraison        4517   (tier A : 144)
+    proprete         7399   (tier A : 0)
+    livraison        5862   (tier A : 144)
+    reseaux          4602   (tier A : 0)
+    cvc              4491   (tier A : 0)
+    securite         2156   (tier A : 0)
+    maintenance      1960   (tier A : 0)
+    controle          724   (tier A : 0)
+    environnement     704   (tier A : 0)
+    depannage         227   (tier A : 0)
   suivi commercial :
-    a contacter      4517
+    a contacter     28125
 
 Statuts autorises   : a contacter | contacte | relance | interesse | rdv | client | refuse | injoignable | hors cible
 Canaux autorises    : email | telephone | linkedin | courrier | visite
