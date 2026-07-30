@@ -129,34 +129,38 @@ La commission est recalculee a chaque export : 40 % du montant encaisse, et 0 %
 sur les lignes dont le produit est une modification (c'est du developpement, pas
 de la vente).
 
-## Le cockpit closer
+## Le CRM en ligne
 
-Un fichier HTML autonome (`cockpit.html`) sert de poste de travail commercial :
-il ouvre le CSV du CRM **en ecriture directe** (API File System Access, Chrome
-et Edge), affiche la fiche de chaque prospect avec ses 8 liens de qualification,
-le script d'appel adapte a son metier, un calculateur de ROI a utiliser pendant
-l'appel, le brief commercial complet et un tableau de bord. Chaque statut change
-dans la liste est ecrit dans le fichier immediatement.
+`index.html` est le poste de travail commercial, deploye sur Netlify. Il charge
+`crm/crm_tournees.csv` directement depuis GitHub, affiche la fiche de chaque
+prospect avec ses liens de qualification, le script d'appel adapte a son metier,
+un calculateur de retour sur investissement a utiliser pendant l'appel, le brief
+commercial complet et un tableau de bord.
 
-Ce fichier n'est PAS dans ce depot : il contient la grille de prix, les taux de
-commission et le brief interne. Il vit dans un depot prive separe ou simplement
-sur le poste du commercial.
+Le commercial saisit un code d'acces a l'ouverture, coche ses statuts, prend ses
+notes, puis clique sur Enregistrer. Seules les lignes modifiees sont envoyees a
+la fonction `netlify/functions/crm-save.mjs`, qui les fusionne par SIREN dans
+`crm/suivi.csv` (quelques centaines d'octets par envoi, contre 7 Mo pour le
+fichier complet). Le jeton GitHub reste dans les variables d'environnement
+Netlify : il ne passe jamais par le navigateur, et le commercial n'a aucun droit
+d'ecriture sur le depot.
 
-Utilisation :
+Deux commerciaux peuvent donc enregistrer en meme temps : chacun envoie ses
+propres lignes, la fusion se fait cote serveur dans la derniere version du
+fichier de suivi.
 
-    python export_crm.py                                   # tout, dans crm/crm_tournees.csv
-    python export_crm.py --par-type                        # + un fichier par metier
-    python export_crm.py --types controle livraison        # les deux verticaux prioritaires
-    python export_crm.py --tier A --dep 69 38 01 42 73 74  # tier A en Auvergne-Rhone-Alpes
+`export_crm.py` relit `crm/suivi.csv` a chaque regeneration : le travail
+commercial survit aux enrichissements et aux reconstructions mensuelles.
 
-Depuis GitHub : Actions > "CRM prospection" > Run workflow, avec les memes
-filtres en champs de saisie. Le resume (volumes, taux d'email, tiers, pipeline
-par statut) s'affiche dans le log et est sauvegarde dans `crm/resume.txt`.
+Variables d'environnement a definir dans Netlify (Site configuration >
+Environment variables), puis redeployer :
 
-A savoir : le fichier complet fait une quinzaine de Mo, donc GitHub refusera de
-l'afficher dans le navigateur (limite d'apercu). Les fichiers par metier, eux,
-s'ouvrent directement en ligne. Pour le fichier complet, passe par
-"Download raw file" ou par l'artefact `crm_tournees` du dernier run.
+| Cle | Valeur |
+|---|---|
+| `GITHUB_TOKEN` | jeton fine-grained, Contents Read and write sur ce depot |
+| `GITHUB_REPO` | `Romtaug/prospection-tournees` |
+| `GITHUB_BRANCH` | `main` |
+| `CRM_CODE` | le code d'acces distribue aux commerciaux |
 
 ## Exploitation
 
