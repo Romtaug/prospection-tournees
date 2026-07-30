@@ -1,0 +1,25 @@
+Source : data/base_tournees_enrichi.csv (4517 lignes)
+
+CRM ecrit : crm/crm_tournees.csv  (4517 lignes, 67 colonnes, 3747 Ko)
+  crm/crm_tournees_livraison.csv  (4517 lignes, 3747 Ko)
+
+--- CRM : 4517 lignes ---
+  fichees              4517  (100.0%)
+  avec email            489  (10.8%)
+  email verifie MX      475
+  avec telephone        454
+  multi-agences         750
+  tier A                144
+  tier B               1308
+  tier C               3065
+  par metier :
+    livraison        4517   (tier A : 144)
+  suivi commercial :
+    a contacter      4517
+
+Statuts autorises   : a contacter | contacte | relance | interesse | rdv | client | refuse | injoignable | hors cible
+Canaux autorises    : email | telephone | linkedin | courrier | visite
+Produits autorises  : POC | Deploiement | Modification
+Livraison autorisee : a faire | en cours | livre
+commission = montant_encaisse x 40%, sauf modification (0 %). Recalculee a chaque export.
+Genere le 30/07/2026
