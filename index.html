@@ -782,6 +782,32 @@ function refresh(){
   });
 }
 
+/* ---- liens : on prend celui du CSV, sinon on le fabrique depuis SIREN et nom ----
+   Utile tant que l'enrichissement n'a pas tourne : la base brute contient deja
+   le SIREN, le nom et la commune, ce qui suffit pour la plupart des liens. */
+function lien(r, k){
+  const v = (r["lien_" + k] || "").trim();
+  if(v) return v;
+  const si = (r.siren || "").replace(/\D/g, "");
+  const nom = (r.nom || "").trim();
+  const ville = (r.ville || r.commune || "").trim();
+  const nv = (nom + " " + ville).trim();
+  switch(k){
+    case "pappers":      return si ? "https://www.pappers.fr/entreprise/" + si : "";
+    case "annuaire":     return si ? "https://annuaire-entreprises.data.gouv.fr/entreprise/" + si : "";
+    case "societe":      return si ? "https://www.societe.com/cgi-bin/search?champs=" + si : "";
+    case "maps":         return (r.latitude && r.longitude)
+                           ? "https://www.google.com/maps/search/?api=1&query=" + enc(r.latitude + "," + r.longitude)
+                           : (nv ? "https://www.google.com/maps/search/?api=1&query=" + enc(nv) : "");
+    case "google":       return nv ? "https://www.google.com/search?q=" + enc(nv) : "";
+    case "linkedin_rech":return nom ? "https://www.linkedin.com/search/results/companies/?keywords=" + enc(nom) : "";
+    case "pagesjaunes":  return nom ? "https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=" + enc(nom)
+                           + (ville ? "&ou=" + enc(ville) : "") : "";
+    case "trustpilot":   { const d = (r.domain || "").trim(); return d ? "https://fr.trustpilot.com/review/" + d : ""; }
+  }
+  return "";
+}
+
 /* ====================== fiche ====================== */
 function fiche(){
   const r = CUR; if(!r) return;
@@ -789,7 +815,7 @@ function fiche(){
   const ag=num(r.nb_etablissements_ouverts), tel=(r.telephone||"").replace(/[^0-9+]/g,"");
   const ville=r.ville||r.commune||"";
   const mapQ = (r.latitude&&r.longitude) ? r.latitude+","+r.longitude
-             : [r.adresse,r.cp,ville].filter(Boolean).join(" ");
+             : ([r.adresse,r.cp,ville].filter(Boolean).join(" ") || [r.nom,ville].filter(Boolean).join(" "));
   const prenom=(r.dirigeant||"").trim().split(/\s+/).slice(-1)[0]||"";
   const body = "Bonjour"+(prenom?" "+prenom:"")+",\n\n"+(met?met.d+"\n\n":"")
     +"Nous déployons pour les entreprises comme la vôtre un optimiseur de tournées : vous importez votre fichier d'interventions, l'outil sort les tournées optimales de vos équipes sur les distances routières réelles, avec les feuilles de route Google Maps et Waze et un export Excel des kilomètres et des coûts économisés.\n\n"
@@ -815,6 +841,9 @@ function fiche(){
       +(r.signaux_bodacc?'<span class="badge b-x">SIGNAL BODACC</span>':"")
     +'</div>'
     +(met?'<div class="warnb" style="margin-bottom:9px"><b>Son problème :</b> '+esc(met.d)+'</div>':"")
+    +(!r.date_enrichi?'<div class="warnb" style="margin-bottom:9px"><b>Ligne pas encore enrichie.</b> '
+      +'Téléphone, email, dirigeant, finances et score arriveront après le passage de l\'enrichissement. '
+      +'Les liens ci-dessous sont calculés depuis le SIREN et le nom, ils fonctionnent déjà.</div>':"")
     +'<div class="row" style="margin-bottom:11px">'
       +(tel?'<a class="btn primary" href="tel:'+esc(tel)+'">Appeler '+esc(r.telephone)+'</a>':"")
       +(mail?'<a class="btn sec" href="'+esc(mail)+'">Email de présentation</a>':"")
@@ -830,9 +859,10 @@ function fiche(){
     +'</div>'
     +(ag>=2?'<div class="okb" style="margin-top:9px"><b>'+ag+' établissements ouverts.</b> Plus de véhicules et des sites plus dispersés, donc un ROI plus élevé et une vente plus facile. Le prix reste 1 900 € pour toute l\'entreprise.</div>':"")
     +'<h3 style="margin-top:13px">Qualifier en 30 secondes</h3><div class="row" style="margin-top:5px">'
-      +L(r.lien_maps,"Maps")+L(r.lien_google,"Google")+L(r.lien_pappers,"Pappers")+L(r.lien_annuaire,"Annuaire")
-      +L(r.linkedin||r.lien_linkedin_rech,"LinkedIn")+L(r.lien_pagesjaunes,"Pages Jaunes")
-      +L(r.lien_societe,"societe.com")+L(r.lien_trustpilot,"Trustpilot")
+      +L(lien(r,"maps"),"Maps")+L(lien(r,"google"),"Google")+L(lien(r,"pappers"),"Pappers")
+      +L(lien(r,"annuaire"),"Annuaire")+L(r.linkedin||lien(r,"linkedin_rech"),"LinkedIn")
+      +L(lien(r,"pagesjaunes"),"Pages Jaunes")+L(lien(r,"societe"),"societe.com")
+      +L(lien(r,"trustpilot"),"Trustpilot")
       +(mapQ?L("https://www.google.com/maps/dir/?api=1&destination="+enc(mapQ),"Itinéraire"):"")
     +'</div>'
     +(r.adresse||ville?'<div class="note">'+esc([r.adresse,r.cp,ville].filter(Boolean).join(", "))+'</div>':"")
