@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CRM tournees</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☎</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,700;10..48,800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -130,9 +130,9 @@
     <h2>CRM tournées</h2>
     <div class="sub">OPTIMISEUR DE TOURNÉES · ESPACE COMMERCIAL</div>
     <p style="font-size:.86rem;color:var(--muted);margin-bottom:14px">
-      Saisis le code d'accès pour ouvrir le CRM et pouvoir enregistrer ton travail.</p>
+      Saisis ton code d'accès pour ouvrir le fichier de prospection et enregistrer ton travail.</p>
     <label class="f" for="gCode">Code d'accès</label>
-    <input id="gCode" type="password" autocomplete="off" placeholder="code fourni par Romain">
+    <input id="gCode" type="password" autocomplete="off" placeholder="ton code">
     <div class="row" style="margin-top:12px">
       <button class="btn primary" id="gGo" style="flex:1;padding:11px">Entrer</button>
       <button class="btn" id="gSkip">Consulter sans enregistrer</button>
@@ -267,7 +267,7 @@
               <tr><td>Clients signés</td><td class="num" id="kCli">-</td></tr>
               <tr><td>Taux de conversion (clients / contactés)</td><td class="num" id="kConv">-</td></tr>
               <tr><td>Panier moyen encaissé</td><td class="num" id="kPan">-</td></tr>
-              <tr><td>Net estimé pour Romain</td><td class="num" id="kNet">-</td></tr>
+              <tr><td>Net estimé pour l'éditeur</td><td class="num" id="kNet">-</td></tr>
             </tbody></table>
             <div class="note">Net = encaissé moins environ 21 % de cotisations moins la commission closer.</div>
           </div>
@@ -353,7 +353,7 @@
       <li>Appelle, ou envoie le mail pré-rempli.</li>
       <li>Dès qu'il donne deux chiffres, passe sur le ROI et calcule devant lui.</li>
       <li>Objectif de l'appel : <b>obtenir un fichier d'interventions</b>. Pas de vente au téléphone.</li>
-      <li>Tu transmets le fichier à Romain, qui déploie le POC à leurs couleurs sous 48 h.</li>
+      <li>Tu transmets le fichier, le POC est déployé à leurs couleurs sous 48 h.</li>
       <li>Tu rappelles avec le lien de l'appli en ligne. C'est là que la vente se fait.</li>
       <li>Tu mets le statut à jour dans la liste, et le montant dans la fiche quand c'est signé.</li>
     </ul>
@@ -468,7 +468,7 @@
             <div class="kpi"><div class="lbl">Chiffre d'affaires</div><div class="big" id="oCa">-</div></div>
             <div class="kpi"><div class="lbl">Commission closer</div><div class="big g" id="oCom">-</div></div>
           </div>
-          <div class="kpi" style="margin-top:11px"><div class="lbl">Net estimé pour Romain (après cotisations et commission)</div>
+          <div class="kpi" style="margin-top:11px"><div class="lbl">Net estimé pour l'éditeur (après cotisations et commission)</div>
             <div class="big" id="oNet">-</div>
             <div class="note">Estimation : environ 21 % de cotisations sur le chiffre d'affaires, puis 40 % de commission. Fais confirmer ton taux exact.</div></div>
           <div id="oCap" style="margin-top:11px"></div>
@@ -808,12 +808,23 @@ function refresh(){
   });
 }
 
+/* L'adresse de la fiche officielle contient souvent deja le code postal et la
+   ville : on evite alors de les repeter. */
+function adresseComplete(r){
+  const a = (r.adresse || "").trim();
+  const cp = (r.cp || "").trim();
+  const v = (r.ville || r.commune || "").trim();
+  if(!a) return [cp, v].filter(Boolean).join(" ");
+  if(cp && a.includes(cp)) return a;
+  return [a, cp, v].filter(Boolean).join(" ");
+}
+
 /* ---- liens : on prend celui du CSV, sinon on le fabrique depuis SIREN et nom ----
    Utile tant que l'enrichissement n'a pas tourne : la base brute contient deja
    le SIREN, le nom et la commune, ce qui suffit pour la plupart des liens. */
 function lien(r, k){
   const v = (r["lien_" + k] || "").trim();
-  if(v) return v;
+  if(v && k !== "maps") return v;      // Maps est toujours recalcule depuis l'adresse
   const si = (r.siren || "").replace(/\D/g, "");
   const nom = (r.nom || "").trim();
   const ville = (r.ville || r.commune || "").trim();
@@ -822,9 +833,14 @@ function lien(r, k){
     case "pappers":      return si ? "https://www.pappers.fr/entreprise/" + si : "";
     case "annuaire":     return si ? "https://annuaire-entreprises.data.gouv.fr/entreprise/" + si : "";
     case "societe":      return si ? "https://www.societe.com/cgi-bin/search?champs=" + si : "";
-    case "maps":         return (r.latitude && r.longitude)
-                           ? "https://www.google.com/maps/search/?api=1&query=" + enc(r.latitude + "," + r.longitude)
-                           : (nv ? "https://www.google.com/maps/search/?api=1&query=" + enc(nv) : "");
+    case "maps": {
+      // On prefere l'adresse postale : Google affiche alors la rue et le numero,
+      // la ou des coordonnees ne montrent qu'un point anonyme.
+      const ad = adresseComplete(r);
+      const q = ad ? (nom ? nom + ", " + ad : ad)
+                   : (r.latitude && r.longitude ? r.latitude + "," + r.longitude : nv);
+      return q ? "https://www.google.com/maps/search/?api=1&query=" + enc(q) : "";
+    }
     case "google":       return nv ? "https://www.google.com/search?q=" + enc(nv) : "";
     case "linkedin_rech":return nom ? "https://www.linkedin.com/search/results/companies/?keywords=" + enc(nom) : "";
     case "pagesjaunes":  return nom ? "https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=" + enc(nom)
@@ -840,8 +856,9 @@ function fiche(){
   const tr=(r.tier||"").toUpperCase(), met=METIERS[r.type]||null;
   const ag=num(r.nb_etablissements_ouverts), tel=(r.telephone||"").replace(/[^0-9+]/g,"");
   const ville=r.ville||r.commune||"";
-  const mapQ = (r.latitude&&r.longitude) ? r.latitude+","+r.longitude
-             : ([r.adresse,r.cp,ville].filter(Boolean).join(" ") || [r.nom,ville].filter(Boolean).join(" "));
+  const adr = adresseComplete(r);
+  const mapQ = adr || (r.latitude&&r.longitude ? r.latitude+","+r.longitude
+                                               : [r.nom,ville].filter(Boolean).join(" "));
   const prenom=(r.dirigeant||"").trim().split(/\s+/).slice(-1)[0]||"";
   const body = "Bonjour"+(prenom?" "+prenom:"")+",\n\n"+(met?met.d+"\n\n":"")
     +"Nous déployons pour les entreprises comme la vôtre un optimiseur de tournées : vous importez votre fichier d'interventions, l'outil sort les tournées optimales de vos équipes sur les distances routières réelles, avec les feuilles de route Google Maps et Waze et un export Excel des kilomètres et des coûts économisés.\n\n"
@@ -853,6 +870,8 @@ function fiche(){
   const mail = r.email ? "mailto:"+r.email+"?subject="+enc("Optimisation de vos tournées - "+(r.nom||""))+"&body="+enc(body) : "";
   const L=(u,t)=> u?'<a class="btn sm" href="'+esc(u)+'" target="_blank" rel="noopener">'+t+'</a>':"";
   const line=(k,v)=> v?'<dt>'+k+'</dt><dd>'+esc(v)+'</dd>':"";
+  const lineA=(k,v,href)=> v?'<dt>'+k+'</dt><dd><a href="'+esc(href)+'" target="_blank" rel="noopener">'
+    +esc(v)+'</a></dd>':"";
   const opt=(v,cur)=>'<option'+(cur===v?" selected":"")+'>'+v+'</option>';
   const ca=num(r.ca), caP=num(r.ca_prev);
 
@@ -876,7 +895,12 @@ function fiche(){
     +'</div>'
     +'<div class="grid g22">'
       +'<div><h3>Contact</h3><dl class="kv">'+line("Dirigeant",r.dirigeant)+line("Fonction",r.qualite)
-        +line("Téléphone",r.telephone)+line("Email",r.email)+line("Autres emails",r.autres_emails)+line("Site",r.domain)+'</dl></div>'
+        +(tel?lineA("Téléphone",r.telephone,"tel:"+tel):"")
+        +(r.email?lineA("Email",r.email,"mailto:"+r.email):"")
+        +line("Autres emails",r.autres_emails)
+        +(r.domain?lineA("Site",r.domain,(r.domain.startsWith("http")?r.domain:"https://"+r.domain)):"")
+        +(adr?lineA("Adresse",adr,"https://www.google.com/maps/search/?api=1&query="+enc(adr)):"")
+        +'</dl></div>'
       +'<div><h3>Entreprise</h3><dl class="kv">'+line("Activité",r.libelle)+line("Effectif",r.effectif)+line("Catégorie",r.categorie)
         +(ca?'<dt>CA</dt><dd>'+eur(ca)+(caP?' <span class="muted">(n-1 '+eur(caP)+')</span>':"")+'</dd>':"")
         +line("Ancienneté",r.anciennete?r.anciennete+" ans":"")
@@ -891,8 +915,8 @@ function fiche(){
       +L(lien(r,"trustpilot"),"Trustpilot")
       +(mapQ?L("https://www.google.com/maps/dir/?api=1&destination="+enc(mapQ),"Itinéraire"):"")
     +'</div>'
-    +(r.adresse||ville?'<div class="note">'+esc([r.adresse,r.cp,ville].filter(Boolean).join(", "))+'</div>':"")
-    +(mapQ?'<iframe class="fmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q='+enc(mapQ)+'&z=13&output=embed"></iframe>':"")
+    +(adr?'<div class="note" style="font-weight:600;color:var(--light)">'+esc(adr)+'</div>':"")
+    +(mapQ?'<iframe class="fmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q='+enc(mapQ)+'&z=16&output=embed"></iframe>':"")
     +(met?'<h3 style="margin-top:13px">Son ouverture d\'appel</h3>'
       +'<div class="sline"><span class="lab">Ouverture</span>"Bonjour, '+(prenom?esc(prenom)+" ? ":"")+'Vous ne m\'attendiez pas, je prends 30 secondes. '+esc(met.ouv)+'"</div>'
       +'<div class="sline"><span class="lab">Découverte</span>"'+esc(met.dec)+'"</div>':"")
