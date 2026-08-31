@@ -1,28 +1,27 @@
-Fusion : 28117 lignes au total, dont 22937 deja fichees (82 %)
+Fusion : 28117 lignes au total, dont 28113 deja fichees (100 %)
 Source : data/base_tournees.csv + data/base_tournees_enrichi.csv (28117 lignes)
-  5176 lignes encore en attente d'enrichissement (elles apparaissent avec les colonnes vides).
 Suivi conserve : 1 lignes deja travaillees
 
-CRM ecrit : crm/crm_tournees.csv  (28117 lignes, 65 colonnes, 21206 Ko)
-  crm/crm_tournees_controle.csv  (723 lignes, 616 Ko)
-  crm/crm_tournees_cvc.csv  (4492 lignes, 3331 Ko)
-  crm/crm_tournees_depannage.csv  (226 lignes, 176 Ko)
-  crm/crm_tournees_environnement.csv  (704 lignes, 541 Ko)
+CRM ecrit : crm/crm_tournees.csv  (28117 lignes, 65 colonnes, 24554 Ko)
+  crm/crm_tournees_controle.csv  (723 lignes, 659 Ko)
+  crm/crm_tournees_cvc.csv  (4492 lignes, 3995 Ko)
+  crm/crm_tournees_depannage.csv  (226 lignes, 206 Ko)
+  crm/crm_tournees_environnement.csv  (704 lignes, 644 Ko)
   crm/crm_tournees_livraison.csv  (5862 lignes, 5078 Ko)
-  crm/crm_tournees_maintenance.csv  (1960 lignes, 1553 Ko)
-  crm/crm_tournees_proprete.csv  (7395 lignes, 5136 Ko)
-  crm/crm_tournees_reseaux.csv  (4600 lignes, 3373 Ko)
-  crm/crm_tournees_securite.csv  (2155 lignes, 1408 Ko)
+  crm/crm_tournees_maintenance.csv  (1960 lignes, 1784 Ko)
+  crm/crm_tournees_proprete.csv  (7395 lignes, 6288 Ko)
+  crm/crm_tournees_reseaux.csv  (4600 lignes, 4089 Ko)
+  crm/crm_tournees_securite.csv  (2155 lignes, 1816 Ko)
 
 --- CRM : 28117 lignes ---
-  fichees             22941  (81.6%)
+  fichees             28117  (100.0%)
   avec email           3827  (13.6%)
   email verifie MX     3726
   avec telephone       4104  (14.6%)
-  multi-agences        4325
+  multi-agences        4862
   tier A               1567
-  tier B               6858
-  tier C              14511
+  tier B               8138
+  tier C              18404
   par metier :
     proprete         7395   (tier A : 325)
     livraison        5862   (tier A : 194)
@@ -41,4 +40,4 @@ Canaux autorises    : email | telephone | linkedin | courrier | visite
 Produits autorises  : POC | Deploiement | Modification
 Livraison autorisee : a faire | en cours | livre
 commission = montant_encaisse x 40%, sauf modification (0 %). Recalculee a chaque export.
-Genere le 24/08/2026
+Genere le 31/08/2026
