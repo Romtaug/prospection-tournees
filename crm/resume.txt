@@ -1,43 +1,43 @@
-Fusion : 28132 lignes au total, dont 27070 deja fichees (96 %)
-Source : data/base_tournees.csv + data/base_tournees_enrichi.csv (28132 lignes)
+Fusion : 28152 lignes au total, dont 26137 deja fichees (93 %)
+Source : data/base_tournees.csv + data/base_tournees_enrichi.csv (28152 lignes)
 Suivi conserve : 1 lignes deja travaillees
 
-CRM ecrit : crm/crm_tournees.csv  (28132 lignes, 67 colonnes, 24625 Ko)
-  crm/crm_tournees_controle.csv  (723 lignes, 661 Ko)
-  crm/crm_tournees_cvc.csv  (4492 lignes, 4004 Ko)
+CRM ecrit : crm/crm_tournees.csv  (28152 lignes, 67 colonnes, 24622 Ko)
+  crm/crm_tournees_controle.csv  (724 lignes, 661 Ko)
+  crm/crm_tournees_cvc.csv  (4494 lignes, 4004 Ko)
   crm/crm_tournees_depannage.csv  (226 lignes, 207 Ko)
   crm/crm_tournees_environnement.csv  (704 lignes, 645 Ko)
-  crm/crm_tournees_livraison.csv  (5866 lignes, 5093 Ko)
-  crm/crm_tournees_maintenance.csv  (1961 lignes, 1789 Ko)
-  crm/crm_tournees_proprete.csv  (7399 lignes, 6307 Ko)
-  crm/crm_tournees_reseaux.csv  (4606 lignes, 4104 Ko)
-  crm/crm_tournees_securite.csv  (2155 lignes, 1821 Ko)
+  crm/crm_tournees_livraison.csv  (5871 lignes, 5080 Ko)
+  crm/crm_tournees_maintenance.csv  (1964 lignes, 1791 Ko)
+  crm/crm_tournees_proprete.csv  (7406 lignes, 6312 Ko)
+  crm/crm_tournees_reseaux.csv  (4608 lignes, 4105 Ko)
+  crm/crm_tournees_securite.csv  (2155 lignes, 1820 Ko)
 
---- CRM : 28132 lignes ---
-  fichees             28132  (100.0%)
-  avec email           3816  (13.6%)
-  email verifie MX     3715
-  avec telephone       4090  (14.5%)
-  multi-agences        4871
-  tier A               1562
-  tier B               8139
-  tier C              18423
+--- CRM : 28152 lignes ---
+  fichees             28152  (100.0%)
+  avec email           3802  (13.5%)
+  email verifie MX     3701
+  avec telephone       4075  (14.5%)
+  multi-agences        4876
+  tier A               1555
+  tier B               8146
+  tier C              18443
   par metier :
-    proprete         7399   (tier A : 321)
-    livraison        5866   (tier A : 194)
-    reseaux          4606   (tier A : 296)
-    cvc              4492   (tier A : 402)
+    proprete         7406   (tier A : 320)
+    livraison        5871   (tier A : 192)
+    reseaux          4608   (tier A : 295)
+    cvc              4494   (tier A : 400)
     securite         2155   (tier A : 64)
-    maintenance      1961   (tier A : 158)
-    controle          723   (tier A : 69)
+    maintenance      1964   (tier A : 157)
+    controle          724   (tier A : 69)
     environnement     704   (tier A : 35)
     depannage         226   (tier A : 23)
   suivi commercial :
-    a contacter     28132
+    a contacter     28152
 
 Statuts autorises   : a contacter | contacte | relance | interesse | rdv | client | refuse | injoignable | hors cible
 Canaux autorises    : email | telephone | linkedin | courrier | visite
 Produits autorises  : POC | Deploiement | Modification
 Livraison autorisee : a faire | en cours | livre
 commission = montant_encaisse x 40%, sauf modification (0 %). Recalculee a chaque export.
-Genere le 28/09/2026
+Genere le 05/10/2026
